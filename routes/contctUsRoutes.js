@@ -3,18 +3,18 @@ const router = express.Router();
 const contactUsController = require('../controllers/contactUsController');
 
 // Create a new inquiry
-router.post('/', contactUsController.createInquiry);
+router.post('/save-contact-us', contactUsController.createInquiry);
 
 // Get all inquiries
-router.get('/', contactUsController.getAllInquiries);
+router.get('/get-contact-us-list', contactUsController.getAllInquiries);
 
 // Get inquiry by ID
-router.get('/:id', contactUsController.getInquiryById);
+router.get('/get-contact-us/:id', contactUsController.getInquiryById);
 
 // Mark inquiry as resolved
-router.patch('/:id/resolve', contactUsController.resolveInquiry);
+router.patch('/update-contact-us/:id/resolve', contactUsController.resolveInquiry);
 
 // Delete inquiry
-router.delete('/:id', contactUsController.deleteInquiry);
+router.delete('/delete-contact-us/:id', contactUsController.deleteInquiry);
 
 module.exports = router;

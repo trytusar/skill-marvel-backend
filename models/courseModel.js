@@ -6,10 +6,25 @@ const courseSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    poster: {
+    instructor: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'instructors',
+        required: true
+    },
+    duration: {
         type: String,
         required: true
     },
+    difficulty: {
+        type: String,
+        required: true,
+        enum: ['Beginner', 'Intermediate', 'Advanced']
+    },
+    tag: {
+        type: String,
+        required: true,
+        enum: ['Technical', 'Design', 'Finance', 'Marketing', 'Soft Skills', 'Other']
+    },    
     description: {
         type: String,   
         required: true
@@ -21,18 +36,21 @@ const courseSchema = new mongoose.Schema({
     price:{
         type: Number,
         required: true
-    },
-    masterclassamount:{
+    },  
+    discountPrice:{
         type: Number,
-        required: false,
-        default: 0
-    },
+        required: true
+    },  
+    image: {
+        type: String,
+        required: true
+    },  
     discount:{
         type: Number,
         required: false,
         default: 0
     },
-    StartDate: {
+    startDate: {
         type: Date,
         required: false
     },
@@ -42,7 +60,7 @@ const courseSchema = new mongoose.Schema({
     },
     mode: {
         type: String,
-        required: true,
+        required: false,
         enum: ['online', 'offline', 'hybrid'],
         default: 'online'
     },

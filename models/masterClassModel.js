@@ -36,18 +36,17 @@ const masterClassSchema = new mongoose.Schema({
             des: {
                 type: String,
                 required: false
+            },
+            html: {
+                type: String,
+                required: false
             }
         }
     ],
     instructor: {
-        name: {
-            type: String,
-            required: true
-        },
-        des: {
-            type: String,
-            required: false
-        }
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'instructors',
+        required: true
     },
     bookingForm: {
         type: Boolean,

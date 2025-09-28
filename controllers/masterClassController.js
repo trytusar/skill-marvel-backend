@@ -11,7 +11,7 @@ module.exports.addMasterClass = async (req, res) => {
         }
         const masterClass = new MasterClass(req.body);
         if (req.file) {
-            masterClass.poster = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+            masterClass.image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
         }
         await masterClass.save();
         res.status(201).json({ masterClass });
@@ -31,7 +31,7 @@ module.exports.updateMasterClass = async (req, res) => {
             return res.status(403).json({ error: 'You are not authorized to update this masterclass' });
         }
         if (req.file) {
-            req.body.poster = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+            req.body.image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
         }
         const update = await MasterClass.findByIdAndUpdate(req.params.id, req.body, { new: true });
         res.status(200).json({ message: 'Masterclass updated successfully' });
@@ -43,7 +43,8 @@ module.exports.updateMasterClass = async (req, res) => {
 
 module.exports.getMasterClasses = async (req, res) => {
     try {
-        const masterClasses = await MasterClass.find({ isSoftDelete: false }).select('-__v -isSoftDelete -createdAt -updatedAt');
+        //const masterClasses = await MasterClass.find({ isSoftDelete: false }).select('-__v -isSoftDelete -createdAt -updatedAt');
+        const masterClasses = await MasterClass.find({ isSoftDelete: false }).select('-__v -isSoftDelete -createdAt -updatedAt').populate('instructor');
         res.status(200).json({ masterClasses });
     } catch (err) {
         console.log(err);
@@ -53,7 +54,10 @@ module.exports.getMasterClasses = async (req, res) => {
 
 module.exports.getMasterClassById = async (req, res) => {
     try {
-        const masterClass = await MasterClass.findOne({ _id: req.params.id, isSoftDelete: false });
+        //const masterClass = await MasterClass.findOne({ _id: req.params.id, isSoftDelete: false });
+        const masterClass = await MasterClass.findOne({ _id: req.params.id, isSoftDelete: false })
+            .populate('instructor'); // This will fetch full instructor details
+      
         if (!masterClass) {
             return res.status(404).json({ error: 'Masterclass not found' });
         }

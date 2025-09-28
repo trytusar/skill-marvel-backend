@@ -18,7 +18,7 @@ module.exports.addCourse = async (req, res) => {
         }
         const course = new Course(req.body);
         if(req.file){
-            course.poster = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+            course.image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
         }
         await course.save();
         res.status(201).json({ course });
@@ -39,7 +39,7 @@ module.exports.updateCourse = async (req, res) => {
             return res.status(403).json({ error: 'You are not authorized to update this course' });
         }
         if(req.file){
-            req.body.poster = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+            req.body.image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
         }
         const update = await Course.findByIdAndUpdate(req.params.id, req.body, { new: true });
         res.status(200).json({ message: 'Course updated successfully' });
@@ -52,7 +52,7 @@ module.exports.updateCourse = async (req, res) => {
 
 module.exports.getCourses = async (req, res) => {
     try{
-        const courses = await Course.find({ isSoftDelete: false }).select('-__v -isSoftDelete -createdAt -updatedAt');
+        const courses = await Course.find({ isSoftDelete: false }).select('-__v -isSoftDelete -createdAt -updatedAt').populate('instructor');
         res.status(200).json({ courses });
     }
     catch(err){
@@ -63,7 +63,7 @@ module.exports.getCourses = async (req, res) => {
 
 module.exports.getCourseById = async (req, res) => {
     try{
-        const course = await Course.findOne({ _id: req.params.id, isSoftDelete: false });
+        const course = await Course.findOne({ _id: req.params.id, isSoftDelete: false }).populate('instructor');
         if(!course){
             return res.status(404).json({ error: 'Course not found' });
         }
