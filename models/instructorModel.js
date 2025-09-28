@@ -31,7 +31,7 @@ const instructorSchema = new mongoose.Schema({
         required: true
     },
     expertise: {
-        type: String,
+        type: [String],
         required: true,
         enum: ['ReactJS', 'JavaScript', 'Python', 'NodeJS', 'DevOps', 'AI/ML', 'Data Science']
     }
