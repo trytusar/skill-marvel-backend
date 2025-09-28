@@ -1,0 +1,29 @@
+{
+  "name": "skill-backend",
+  "version": "1.0.0",
+  "description": "skill backend for the html frontend application",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "keywords": [
+    "geeknomix",
+    "graphy"
+  ],
+  "author": "chakit",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.7.7",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "crypto": "^1.0.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "mongoose": "^8.6.3",
+    "multer": "^1.4.5-lts.1",
+    "nodemon": "^3.1.5",
+    "razorpay": "^2.9.6",
+    "twilio": "^5.3.1"
+  }
+}

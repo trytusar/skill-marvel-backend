@@ -1,0 +1,7 @@
+- Course: update API
+    - Pursase Course
++ Add Master Class
+    - Inquiry Form
++ Instructor
+
++ Contact-us Page API
