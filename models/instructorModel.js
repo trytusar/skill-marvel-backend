@@ -20,7 +20,7 @@ const instructorSchema = new mongoose.Schema({
     assignedCourse: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'courses',
-        required: true
+        required: false
     },
     profilePicture: {
         type: String,

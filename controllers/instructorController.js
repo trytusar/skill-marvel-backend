@@ -8,11 +8,16 @@ exports.addInstructor = async (req, res) => {
         if (req.file) {
             profilePicture = req.file.path;
         }
+
         // Optionally validate assignedCourse exists
-        const course = await Course.findById(assignedCourse);
-        if (!course) {
-            return res.status(400).json({ error: 'Assigned course not found' });
+        if(assignedCourse){
+            const course = await Course.findById(assignedCourse);
+            if (!course) {
+                return res.status(400).json({ error: 'Assigned course not found' });
+            }
         }
+        
+        
         const instructor = new Instructor({
             fullName,
             email,
@@ -59,6 +64,15 @@ exports.updateInstructor = async (req, res) => {
         if (req.file) {
             updateData.profilePicture = req.file.path;
         }
+
+         // Optionally validate assignedCourse exists
+        if(updateData.assignedCourse){
+            const course = await Course.findById(updateData.assignedCourse);
+            if (!course) {
+                return res.status(400).json({ error: 'Assigned course not found' });
+            }
+        }
+
         const instructor = await Instructor.findByIdAndUpdate(req.params.id, updateData, { new: true });
         if (!instructor) {
             return res.status(404).json({ error: 'Instructor not found' });

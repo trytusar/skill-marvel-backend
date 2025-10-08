@@ -44,8 +44,28 @@ module.exports.updateMasterClass = async (req, res) => {
 module.exports.getMasterClasses = async (req, res) => {
     try {
         //const masterClasses = await MasterClass.find({ isSoftDelete: false }).select('-__v -isSoftDelete -createdAt -updatedAt');
-        const masterClasses = await MasterClass.find({ isSoftDelete: false }).select('-__v -isSoftDelete -createdAt -updatedAt').populate('instructor');
-        res.status(200).json({ masterClasses });
+        //const masterClasses = await MasterClass.find({ isSoftDelete: false }).select('-__v -isSoftDelete -createdAt -updatedAt').populate('instructor');
+
+        /*const masterClasses = await MasterClass.find({ isSoftDelete: false })
+      .select("_id category title startDateTime endDateTime aboutMasterClass whatYouWillLearn image")
+      .populate("instructor", "fullName"); // if you want instructor details */
+
+      const masterClasses = await MasterClass.find({ isSoftDelete: false })
+  .select("_id category title startDateTime endDateTime aboutMasterClass whatYouWillLearn image")
+  .populate("instructor", "fullName -_id");
+
+    /*  // Flatten instructor → instructorName
+        const formatted = masterClasses.map(mc => ({
+        ...mc,
+        instructorName: mc.instructor ? mc.instructor.fullName : null
+        }));
+
+        // remove nested instructor object
+        formatted.forEach(mc => delete mc.instructor);
+    */
+
+    res.status(200).json({ masterClasses });
+
     } catch (err) {
         console.log(err);
         res.status(500).json({ error: 'Failed to get masterclasses' });

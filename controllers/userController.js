@@ -16,12 +16,28 @@ module.exports.getUserProfile = async (req, res) => {
 
 module.exports.updateUserProfile = async (req, res) => {
     try{
-        const user = await User.findById(req.user._id);
+        /*
+        const user = await User.findById(req.user.id);
         if(!user){
             return res.status(404).json({ error: 'User not found' });
         }
         user.updateOne(req.body);
         await user.save();
+        */
+        if(req.file){
+            req.body.profilePicture = `${req.protocol}://${req.get('host')}/uploads/users/${req.file.filename}`;
+        } 
+
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user.id,
+            req.body,
+            { new: true, runValidators: true } // return updated doc
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+            
         res.status(200).json({ message: 'User profile updated successfully' });
     }
     catch(err){

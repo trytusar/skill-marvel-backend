@@ -52,7 +52,7 @@ module.exports.updateCourse = async (req, res) => {
 
 module.exports.getCourses = async (req, res) => {
     try{
-        const courses = await Course.find({ isSoftDelete: false }).select('-__v -isSoftDelete -createdAt -updatedAt').populate('instructor');
+        const courses = await Course.find({ isSoftDelete: false }).select('-__v -isSoftDelete -createdAt -updatedAt').populate('instructor', "fullName -_id");
         res.status(200).json({ courses });
     }
     catch(err){

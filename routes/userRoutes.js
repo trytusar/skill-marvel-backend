@@ -4,11 +4,23 @@ const auth = require('../middlewares/authMiddleware'); // Assuming you have an a
 
 const router = express.Router();
 
+const multer = require('multer');
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'uploads/users/');
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + '-' + file.originalname);
+    }
+});
+const upload = multer({ storage: storage });
+
 // Route to get user profile
 router.get('/profile', auth.authMiddleware, getUserProfile);
 
 // Route to update user profile
-router.put('/profile', auth.authMiddleware, updateUserProfile);
+router.put('/update-profile', auth.authMiddleware, upload.single('profilePicture'), updateUserProfile);
 
 // // Route to delete user account
 router.delete('/account', auth.authMiddleware, deleteMyAccount);

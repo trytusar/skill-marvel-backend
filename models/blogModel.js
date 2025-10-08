@@ -11,7 +11,7 @@ const commentSchema = new mongoose.Schema({
         required: true,
         trim: true
     }
-},{timestamps: true});
+}, { timestamps: true });
 
 // Define the Blog schema
 const BlogSchema = new mongoose.Schema({
@@ -34,7 +34,7 @@ const BlogSchema = new mongoose.Schema({
         type: String,
         trim: true
     }],
-},{timestamps: true});
+}, { timestamps: true });
 
 // Create models
 const Blog = mongoose.model('blogs', BlogSchema);
