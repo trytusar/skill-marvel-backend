@@ -3,8 +3,8 @@ const mongoose = require('mongoose');
 const masterClassSchema = new mongoose.Schema({
   category: {
     type: String,
-    required: true,
-    enum: ['Software Development', 'Data Science (AI/ML)', 'DevOps', 'ReactJS'], // updated to match JSON
+    required: true
+    //enum: ['Software Development', 'Data Science (AI/ML)', 'DevOps', 'ReactJS'], // updated to match JSON
   },
   image: {
     type: String, // store URL or file path

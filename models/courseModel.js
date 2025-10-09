@@ -22,8 +22,8 @@ const courseSchema = new mongoose.Schema({
     },
     tag: {
         type: String,
-        required: true,
-        enum: ['Technical', 'Design', 'Finance', 'Marketing', 'Soft Skills', 'Other']
+        required: true
+        //enum: ['Technical', 'Design', 'Finance', 'Marketing', 'Soft Skills', 'Other']
     },    
     description: {
         type: String,   
@@ -39,7 +39,7 @@ const courseSchema = new mongoose.Schema({
     },  
     discountPrice:{
         type: Number,
-        required: true
+        required: false
     },  
     image: {
         type: String,
