@@ -37,6 +37,11 @@ const courseSchema = new mongoose.Schema({
         type: Number,
         required: true
     },  
+    discount:{
+        type: Number,
+        required: false,
+        default: 0
+    },  
     discountPrice:{
         type: Number,
         required: false
@@ -44,11 +49,6 @@ const courseSchema = new mongoose.Schema({
     image: {
         type: String,
         required: true
-    },  
-    discount:{
-        type: Number,
-        required: false,
-        default: 0
     },
     startDate: {
         type: Date,
@@ -72,6 +72,15 @@ const courseSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    noOfEnrollements: {
+        type: Number,
+        default: 0
+    },    
+    whatYouWillLearn: {
+        type: String,
+        required: false
+    }
+}, { timestamps: true
 });
 
 const Course = mongoose.model('courses', courseSchema);
