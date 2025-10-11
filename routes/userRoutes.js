@@ -1,14 +1,14 @@
 const express = require('express');
 const { getUserProfile, updateUserProfile, deleteMyAccount} = require('../controllers/userController');
 const auth = require('../middlewares/authMiddleware'); // Assuming you have an auth middleware to verify JWT
-
 const router = express.Router();
-
 const multer = require('multer');
+const uploadPaths = require('../utils/uploadPaths');
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'uploads/users/');
+        //cb(null, 'uploads/users/');
+        cb(null, `.${uploadPaths.USER_IMAGE}/`);
     },
     filename: function (req, file, cb) {
         cb(null, Date.now() + '-' + file.originalname);

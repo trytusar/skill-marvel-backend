@@ -3,9 +3,12 @@ const router = express.Router();
 const courseController = require('../controllers/courseController');
 const auth = require('../middlewares/authMiddleware'); // Assuming you have an auth middleware to verify JWT
 const multer = require('multer');
+const uploadPaths = require('../utils/uploadPaths');
+
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'uploads/course/');
+        //cb(null, 'uploads/course/');
+        cb(null, `.${uploadPaths.COURSE_IMAGE}/`);
     },
     filename: function (req, file, cb) {
         cb(null, Date.now() + '-' + file.originalname);

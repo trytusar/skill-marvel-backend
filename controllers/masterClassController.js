@@ -3,6 +3,7 @@ const Purchase = require('../models/purchaseModel');
 const User = require('../models/userModel');
 require('dotenv').config();
 const axios = require('axios');
+const getFullUrl = require('../utils/getFullUrl');
 
 module.exports.addMasterClass = async (req, res) => {
     try {
@@ -11,7 +12,8 @@ module.exports.addMasterClass = async (req, res) => {
         }
         const masterClass = new MasterClass(req.body);
         if (req.file) {
-            masterClass.image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+            //masterClass.image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+            masterClass.image = getFullUrl.getMasterClassImageUrl(req);
         }
         await masterClass.save();
         res.status(201).json({ masterClass });
@@ -31,7 +33,8 @@ module.exports.updateMasterClass = async (req, res) => {
             return res.status(403).json({ error: 'You are not authorized to update this masterclass' });
         }
         if (req.file) {
-            req.body.image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+            //req.body.image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+            req.body.image = getFullUrl.getMasterClassImageUrl(req);
         }
         const update = await MasterClass.findByIdAndUpdate(req.params.id, req.body, { new: true });
         res.status(200).json({ message: 'Masterclass updated successfully' });

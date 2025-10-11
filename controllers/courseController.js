@@ -5,6 +5,7 @@ const Razorpay = require('razorpay');
 const crypto = require('crypto'); // For verifying the callback signature
 require('dotenv').config();
 const axios = require('axios');
+const getFullUrl = require('../utils/getFullUrl');
 
 const razorpayInstance = new Razorpay({
     key_id: process.env.RAZORPAY_KEY,
@@ -18,7 +19,8 @@ module.exports.addCourse = async (req, res) => {
         }
         const course = new Course(req.body);
         if(req.file){
-            course.image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+            //course.image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+            course.image = getFullUrl.getCourseImageUrl(req);
         }
         await course.save();
         res.status(201).json({ course });
@@ -39,7 +41,8 @@ module.exports.updateCourse = async (req, res) => {
             return res.status(403).json({ error: 'You are not authorized to update this course' });
         }
         if(req.file){
-            req.body.image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+            //req.body.image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+            req.body.image = getFullUrl.getCourseImageUrl(req);
         }
         const update = await Course.findByIdAndUpdate(req.params.id, req.body, { new: true });
         res.status(200).json({ message: 'Course updated successfully' });

@@ -1,12 +1,17 @@
 const Instructor = require('../models/instructorModel');
 const Course = require('../models/courseModel');
+const getFullUrl = require('../utils/getFullUrl');
+
 
 exports.addInstructor = async (req, res) => {
     try {
         const { fullName, email, phone, assignedCourse, yearsOfExperience, expertise } = req.body;
         let profilePicture = '';
         if (req.file) {
-            profilePicture = req.file.path;
+            //profilePicture = req.file.path;        
+            //profilePicture = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+            profilePicture = getFullUrl.getInstructorImageUrl(req);
+
         }
 
         // Optionally validate assignedCourse exists
@@ -15,8 +20,7 @@ exports.addInstructor = async (req, res) => {
             if (!course) {
                 return res.status(400).json({ error: 'Assigned course not found' });
             }
-        }
-        
+        }        
         
         const instructor = new Instructor({
             fullName,
@@ -62,7 +66,8 @@ exports.updateInstructor = async (req, res) => {
     try {
         const updateData = { ...req.body };
         if (req.file) {
-            updateData.profilePicture = req.file.path;
+            //updateData.profilePicture = req.file.path;
+            updateData.profilePicture = getFullUrl.getInstructorImageUrl(req);
         }
 
          // Optionally validate assignedCourse exists

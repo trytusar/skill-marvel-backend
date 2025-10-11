@@ -1,4 +1,5 @@
 const User = require('../models/userModel');
+const getFullUrl = require('../utils/getFullUrl');
 
 module.exports.getUserProfile = async (req, res) => {
     try{
@@ -25,7 +26,8 @@ module.exports.updateUserProfile = async (req, res) => {
         await user.save();
         */
         if(req.file){
-            req.body.profilePicture = `${req.protocol}://${req.get('host')}/uploads/users/${req.file.filename}`;
+            //req.body.profilePicture = `${req.protocol}://${req.get('host')}/uploads/users/${req.file.filename}`;
+            req.body.profilePicture = getFullUrl.getUserImageUrl(req);
         } 
 
         const updatedUser = await User.findByIdAndUpdate(

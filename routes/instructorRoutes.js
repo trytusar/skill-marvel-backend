@@ -3,10 +3,12 @@ const router = express.Router();
 const instructorController = require('../controllers/instructorController');
 const auth = require('../middlewares/authMiddleware');
 const multer = require('multer');
+const uploadPaths = require('../utils/uploadPaths');
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'uploads/instructors/');
+        //cb(null, 'uploads/instructors/');
+        cb(null, `.${uploadPaths.INSTRUCTOR_IMAGE}/`); 
     },
     filename: function (req, file, cb) {
         cb(null, Date.now() + '-' + file.originalname);
