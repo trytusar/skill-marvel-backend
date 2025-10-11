@@ -12,7 +12,7 @@ router.get('/get-inquiry-list', inquiryController.getAllInquiries);
 router.get('/get-inquiry/:id', inquiryController.getInquiryById);
 
 // Mark inquiry as registered
-router.patch('/update-inquiry/:id', inquiryController.markAsRegistered);
+router.patch('/register-inquiry/:id', inquiryController.markAsRegistered);
 
 // Delete inquiry
 router.delete('/delete-inquiry/:id', inquiryController.deleteInquiry);
