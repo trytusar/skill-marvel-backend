@@ -9,10 +9,11 @@ const userRoutes = require('./routes/userRoutes');
 const blogRoutes = require('./routes/blogRoutes');
 const courseRoutes = require('./routes/courseRoutes');
 const masterClassRoutes = require('./routes/masterClassRoutes');
-const contactUsRoutes = require('./routes/contctUsRoutes');
+const contactUsRoutes = require('./routes/contactUsRoutes');
 const inquiryRoutes = require('./routes/inquiryRoutes');
 const instructorRoutes = require('./routes/instructorRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const dashboardRoutes = require('./routes/dashboardRouter.js');
 
 
 const app = express();
@@ -39,6 +40,7 @@ app.use('/api/contact-us', contactUsRoutes);
 app.use('/api/inquiry', inquiryRoutes);
 app.use('/api/instructor', instructorRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI).then(() => console.log('MongoDB connected')).catch(err => console.error('MongoDB connection error:', err));

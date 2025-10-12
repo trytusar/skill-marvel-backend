@@ -1,4 +1,4 @@
-const ContactUs = require('../models/contctUsModel');
+const ContactUs = require('../models/contactUsModel');
 
 exports.createInquiry = async (req, res) => {
     try {

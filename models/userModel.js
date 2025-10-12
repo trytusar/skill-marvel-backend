@@ -31,7 +31,9 @@ const userSchema = new mongoose.Schema({
     graphyUserId: { type: String, default: null }, // Graphy API user ID
     isCompleted: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },
-    role: { type: String, default: 'user', enum: ['user', 'admin'] }
+    role: { type: String, default: 'user', enum: ['user', 'admin'] },
+    lastLogin: {  type: Date, default: null },
+    addedByAdmin: { type: Boolean, default: false  }, // who added this user (admin/signup)
 
 }, { timestamps: true });
 

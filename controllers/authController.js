@@ -98,6 +98,7 @@ exports.verifyOtp = async (req, res) => {
     const user = await User.findOneAndUpdate(
         { phoneNumber },
         { isVerified: true },
+        { lastLogin: new Date() },
         { new: true }
     );
 

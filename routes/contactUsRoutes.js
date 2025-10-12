@@ -12,7 +12,7 @@ router.get('/get-contact-us-list', contactUsController.getAllInquiries);
 router.get('/get-contact-us/:id', contactUsController.getInquiryById);
 
 // Mark inquiry as resolved
-router.patch('/update-contact-us/:id/resolve', contactUsController.resolveInquiry);
+router.patch('/resolve-contact-us/:id', contactUsController.resolveInquiry);
 
 // Delete inquiry
 router.delete('/delete-contact-us/:id', contactUsController.deleteInquiry);
