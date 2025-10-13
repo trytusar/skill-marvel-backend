@@ -14,6 +14,7 @@ const inquiryRoutes = require('./routes/inquiryRoutes');
 const instructorRoutes = require('./routes/instructorRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const dashboardRoutes = require('./routes/dashboardRouter.js');
+const studentRoutes = require('./routes/studentRoute');
 
 
 const app = express();
@@ -41,6 +42,8 @@ app.use('/api/inquiry', inquiryRoutes);
 app.use('/api/instructor', instructorRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/student', studentRoutes);
+
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI).then(() => console.log('MongoDB connected')).catch(err => console.error('MongoDB connection error:', err));

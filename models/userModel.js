@@ -33,7 +33,7 @@ const userSchema = new mongoose.Schema({
     isActive: { type: Boolean, default: true },
     role: { type: String, default: 'user', enum: ['user', 'admin'] },
     lastLogin: {  type: Date, default: null },
-    addedByAdmin: { type: Boolean, default: false  }, // who added this user (admin/signup)
+    isAddedByAdmin: { type: Boolean, default: false  }, // who added this user (admin/signup)
 
 }, { timestamps: true });
 

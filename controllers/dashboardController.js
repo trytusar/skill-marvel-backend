@@ -39,7 +39,9 @@ module.exports.getDashboardStats = async (req, res) => {
     const activeStudents = await User.countDocuments({ role: 'user', isActive: true });
 
     // 8. Recent SignUps (last 5 users)
-    const recentSignUps = await User.find().sort({ createdAt: -1 }).limit(5);
+    const recentSignUps = await User.find({addedByAdmin: false}).sort({ createdAt: -1 })
+        .select('firstName lastName email phoneNumberNumber createdAt lastLogin')
+        .limit(5);
 
     // 9. Total Inquiry
     const totalInquiry = await Inquiry.countDocuments();

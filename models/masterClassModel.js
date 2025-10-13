@@ -51,6 +51,10 @@ const masterClassSchema = new mongoose.Schema({
   isSoftDelete: {
     type: Boolean,
     default: false
+  },  
+  isFree: {
+    type: Boolean,
+    default: false
   }
 }, { timestamps: true });
 

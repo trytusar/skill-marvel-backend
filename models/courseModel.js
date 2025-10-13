@@ -79,7 +79,12 @@ const courseSchema = new mongoose.Schema({
     whatYouWillLearn: {
         type: String,
         required: false
+    },  
+    isFree: {
+        type: Boolean,
+        default: false
     }
+    
 }, { timestamps: true
 });
 
