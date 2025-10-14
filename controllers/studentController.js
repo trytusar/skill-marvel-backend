@@ -12,7 +12,7 @@ module.exports.listAllStudents = async (req, res) => {
       .populate('enrolledCourse', 'title'); // assuming enrolledCourse is an array of course IDs */
 
        const users = await User.find({ role: 'user' })
-      .select('profilePicture firstName lastName phoneNumber email status lastLogin');
+      .select('profilePicture firstName lastName phoneNumber email status createdAt lastLogin');
 
     // For each user, fetch their enrolled courses from Enrollment
     const students = await Promise.all(users.map(async (user) => {
@@ -52,6 +52,20 @@ module.exports.listAllEnrolledUsers = async (req, res) => {
   }
 };
 
+/** Auto-generate studentId */
+async function generateStudentId() {
+  const PREFIX = 'STU';
+  const DIGIT_LENGTH = 6;
+  const lastStudent = await User.findOne({ studentId: { $regex: new RegExp(`^${PREFIX}\\d{${DIGIT_LENGTH}}$`) } })
+    .sort({ createdAt: -1 })
+    .select('studentId');
+  let nextNumber = 1;
+  if (lastStudent && lastStudent.studentId) {
+    nextNumber = parseInt(lastStudent.studentId.replace(PREFIX, ''), 10) + 1;
+  }
+  return `${PREFIX}${nextNumber.toString().padStart(DIGIT_LENGTH, '0')}`;
+}
+
 module.exports.addStudent = async (req, res) => {
   try {
     if (req.user.role !== 'admin') {
@@ -64,16 +78,19 @@ module.exports.addStudent = async (req, res) => {
 
     const { firstName, lastName, email, phoneNumber, gender, enrolledCourse, profilePicture } = req.body;
 
+ 
+   const studentId = await generateStudentId();
+
     const student = new User({
       firstName,
       lastName,
       email,
       phoneNumber,
-      gender,
-      //enrolledCourse,
+      gender,     
       profilePicture,
       role: 'user',
-      isAddedByAdmin: true
+      isAddedByAdmin: true,
+      studentId,
     });
     
 
@@ -94,6 +111,10 @@ module.exports.addStudent = async (req, res) => {
 
 module.exports.updateStudent = async (req, res) => {
     try{
+
+      if (req.user.role !== 'admin') {
+          return res.status(403).json({ error: 'You are not authorized to add student' });
+      }
        
         if(req.file){
             req.body.profilePicture = getFullUrl.getUserImageUrl(req);
@@ -132,25 +153,26 @@ module.exports.updateStudent = async (req, res) => {
 
 module.exports.bulkEnrollStudents = async (req, res) => {
   try {
+    if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'You are not authorized to add student' });
+    }
     const filePath = req.file.path; // assuming multer is used for file upload
     const studentsArray = await csv().fromFile(filePath);
 
-    // Map CSV fields to User model
-    const usersToInsert = studentsArray.map(s => ({
-      firstName: s['First Name'],
-      lastName: s['Last Name'],
-      email: s['Email'],
-      phoneNumber: s['Phone Number'],
-      gender: s['Gender'],
-      profilePicture: s['Profile Picture'],
-      role: 'user',
-      isAddedByAdmin: true
-    }));
-
-    //await User.insertMany(usersToInsert);
-
-    //const enrollment = new Enrollment({ user: userId, course: courseId });
-    //await enrollment.save();
+    // Map CSV fields to User model fields  
+    const usersToInsert = await Promise.all(
+      studentsArray.map(async (s) => ({
+        firstName: s['First Name'],
+        lastName: s['Last Name'],
+        email: s['Email'],
+        phoneNumber: s['Phone Number'],
+        gender: s['Gender'],
+        profilePicture: s['Profile Picture'],
+        role: 'user',
+        isAddedByAdmin: true,
+        studentId: await generateStudentId()
+      }))
+    );
 
     const insertedUsers = await User.insertMany(usersToInsert);
 
@@ -173,12 +195,38 @@ module.exports.bulkEnrollStudents = async (req, res) => {
   }
 };
 
-module.exports.getStudentById = async (req, res) => {
+module.exports.getStudentDetailsById = async (req, res) => {
   try {
     const userId = req.params.id;
 
     // Find user by ID
     const user = await User.findById(userId).select('-__v -createdAt -updatedAt -graphyUserId');
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Fetch enrolled courses for this user
+    const enrollments = await Enrollment.find({ user: user._id }).populate('course', 'title');
+
+    const studentDetails = {
+      ...user.toObject(),
+      enrolledCourses: enrollments.map(e => e.course ? e.course.title : null)
+    };
+
+    res.status(200).json({ student: studentDetails });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: 'Failed to fetch student details' });
+  }
+};
+
+module.exports.getDetailsByStudentId = async (req, res) => {
+  try {
+    const studentId = req.params.id;
+
+    // Find user by studentId
+    const user = await User.findOne({ studentId }).select('-__v -createdAt -updatedAt -graphyUserId');
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });

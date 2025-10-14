@@ -10,7 +10,7 @@ const userSchema = new mongoose.Schema({
     dob: { type: Date },
     gender: { type: String, enum: ['male', 'female', 'other'] },
     address: { type: String },
-    bio: { type: String },
+    bio: { type: String },    
     experience: [
         {
             company: { type: String },
@@ -25,6 +25,7 @@ const userSchema = new mongoose.Schema({
         twitter: { type: String },
         website: { type: String }
     },
+    studentId: { type: String, required: false },
     profilePicture: { type: String, required: false },
     referralCode: { type: String },
     referredBy: { type: String }, // If referred by someone else, store their referral code

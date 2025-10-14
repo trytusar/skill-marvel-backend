@@ -33,6 +33,7 @@ router.put('/update-student/:id', auth.authMiddleware, upload.single('profilePic
 // Bulk enroll students (admin only)
 router.post('/bulk-enroll', auth.authMiddleware, upload.single('csvFile'), studentController.bulkEnrollStudents);
 
-router.get('/student-details/:id', auth.authMiddleware, studentController.getStudentById);
+router.get('/student-details/:id', auth.authMiddleware, studentController.getStudentDetailsById);
+router.get('/search-student-details/:id', auth.authMiddleware, studentController.getDetailsByStudentId);
 
 module.exports = router;
