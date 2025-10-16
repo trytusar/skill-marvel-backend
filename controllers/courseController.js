@@ -22,8 +22,8 @@ module.exports.addCourse = async (req, res) => {
             //course.image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
             course.image = getFullUrl.getCourseImageUrl(req);
         }
-        await course.save();
-        res.status(201).json({ course });
+        const savedCourse = await course.save();
+        res.status(201).json({ savedCourse });
     }
     catch(err){
         console.log(err);
@@ -264,6 +264,15 @@ exports.purchaseCourse = async (req, res) => {
         });
 
         await newPurchase.save();
+
+        // Update user's isCourseEnrolled flag to true
+        const user = await User.findById(userId);
+        if (purchasetype === 'enroll') {
+            user.isCourseEnrolled = true;
+        } else if (purchasetype === 'masterclass') {
+            user.isMasterClassEnrolled = true;
+        }
+        await user.save();
 
         console.log(zohoResponse.data);
         res.status(201).json({

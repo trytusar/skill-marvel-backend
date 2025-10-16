@@ -15,8 +15,8 @@ module.exports.addMasterClass = async (req, res) => {
             //masterClass.image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
             masterClass.image = getFullUrl.getMasterClassImageUrl(req);
         }
-        await masterClass.save();
-        res.status(201).json({ masterClass });
+        const savedMasterClass = await masterClass.save();
+        res.status(201).json({ savedMasterClass });
     } catch (err) {
         console.log(err);
         res.status(500).json({ error: 'Failed to add masterclass' });

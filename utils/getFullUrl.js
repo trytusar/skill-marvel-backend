@@ -20,12 +20,19 @@ function getUserImageUrl(req) {
   return `${req.protocol}://${req.get('host')}${uploadPaths.USER_IMAGE}/${req.file.filename}`;
 }
 
+function getBannerImageUrl(req, filename) {
+  const uploadPaths = require('./uploadPaths');
+  return `${req.protocol}://${req.get('host')}${uploadPaths.BANNER_IMAGE}/${filename}`;
+}
+
+ 
 module.exports = {
   getMasterClassImageUrl,
   getCourseImageUrl,
   getInstructorImageUrl,
   getUserImageUrl,
-  getFullUrl
+  getFullUrl,
+  getBannerImageUrl
 };
 
 /*

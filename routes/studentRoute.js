@@ -25,6 +25,7 @@ router.get('/list-all-students', auth.authMiddleware, studentController.listAllS
 // List all user signups (admin only)
 router.get('/list-all-signups', auth.authMiddleware, studentController.listAllSignUps);
 router.get('/list-all-enrolled-users', auth.authMiddleware, studentController.listAllEnrolledUsers);
+router.get('/list-all-master-class-enrolled-users', auth.authMiddleware, studentController.listAllMasterClassEnrolledUsers);
 
 // Add single student (admin only)
 router.post('/add-student', auth.authMiddleware, upload.single('profilePicture'), studentController.addStudent);

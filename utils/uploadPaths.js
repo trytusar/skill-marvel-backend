@@ -6,4 +6,5 @@ module.exports = {
   INSTRUCTOR_IMAGE: `${UPLOAD_BASE_URL}/instructors`,
   USER_IMAGE: `${UPLOAD_BASE_URL}/users`,
   USER_CSV: `${UPLOAD_BASE_URL}/csv`,
+  BANNER_IMAGE: `${UPLOAD_BASE_URL}/banner`,
 };

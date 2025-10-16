@@ -29,9 +29,10 @@ module.exports.listAllStudents = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch students' });
   }
 };
+
 module.exports.listAllSignUps = async (req, res) => {
   try {
-    const users = await User.find({ addedByAdmin: false })
+    const users = await User.find({ isAddedByAdmin: false })
       .select('profilePicture firstName lastName email phoneNumberNumber createdAt lastLogin');
 
     res.status(200).json({ users });
@@ -40,17 +41,71 @@ module.exports.listAllSignUps = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch users' });
   }
 };
+
 module.exports.listAllEnrolledUsers = async (req, res) => {
   try {
-    const users = await User.find({ addedByAdmin: true })
+    const users = await User.find({ isCourseEnrolled: true })
       .select('profilePicture firstName lastName email phoneNumberNumber createdAt lastLogin');
 
-    res.status(200).json({ users });
+    const students = await Promise.all(users.map(async (user) => {
+      const enrollments = await Enrollment.find({ user: user._id }).populate('course', 'title price');
+      console.log('Enrollments for user', user._id, enrollments);
+      return {
+        ...user.toObject(),
+        enrolledCourses: enrollments
+          .filter(e => e.course) // Remove entries with no course
+          .map(e => ({
+            title: e.course.title,
+            isFree: e.course.isFree,
+            price: e.course.price
+          }))
+      };
+    }));
+    
+      /*
+      const users = await User.find({
+        $or: [
+          { isCourseEnrolled: true },
+          { isMasterClassEnrolled: true }
+        ]
+      }).select('profilePicture firstName lastName email phoneNumberNumber createdAt lastLogin');
+      */
+
+
+    res.status(200).json({ students });
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: 'Failed to fetch users' });
   }
 };
+
+
+module.exports.listAllMasterClassEnrolledUsers = async (req, res) => {
+  try {
+    const users = await User.find({ isMasterClassEnrolled: true })
+      .select('profilePicture firstName lastName email phoneNumberNumber createdAt lastLogin');
+
+    const students = await Promise.all(users.map(async (user) => {
+      const enrollments = await MasterClassEnrollment.find({ user: user._id }).populate('masterClass', 'title price');
+      return {
+        ...user.toObject(),
+         enrolledMasterClasses: enrollments
+          .filter(e => e.masterClass) // Remove entries with no masterClass
+          .map(e => ({
+            title: e.masterClass.title,
+            isFree: e.masterClass.isFree,
+            price: e.masterClass.price
+          }))
+      };
+    }));
+
+    res.status(200).json({ students });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+};
+
 
 /** Auto-generate studentId */
 async function generateStudentId() {
@@ -78,6 +133,17 @@ module.exports.addStudent = async (req, res) => {
 
     const { firstName, lastName, email, phoneNumber, gender, enrolledCourse, profilePicture } = req.body;
 
+    // Check if email already exists
+    const emailExists = await User.findOne({ email });
+    if (emailExists) {
+      return res.status(409).json({ error: 'Email already exists' });
+    }
+
+    // Check if phoneNumber already exists
+    const phoneExists = await User.findOne({ phoneNumber });
+    if (phoneExists) {
+      return res.status(409).json({ error: 'Phone number already exists' });
+    }
  
    const studentId = await generateStudentId();
 
@@ -91,16 +157,21 @@ module.exports.addStudent = async (req, res) => {
       role: 'user',
       isAddedByAdmin: true,
       studentId,
+      isCompleted: true
     });
     
 
-    const insertedUsers = await student.save();
+    const insertedUser = await student.save();
     if(enrolledCourse){
-      const enrollment = new Enrollment({ user: insertedUsers._id, course: enrolledCourse });
+      const enrollment = new Enrollment({ user: insertedUser._id, course: enrolledCourse });
       await enrollment.save();
+
+      // Update user's isCourseEnrolled flag to true
+      insertedUser.isCourseEnrolled = true;
+      await insertedUser.save();
     }
     
-    res.status(201).json({ student });
+    res.status(201).json({ insertedUser });
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: 'Failed to add student' });
@@ -139,6 +210,10 @@ module.exports.updateStudent = async (req, res) => {
           if (!existingEnrollment) {
             const enrollment = new Enrollment({ user: updatedUser._id, course: enrolledCourse });
             await enrollment.save();
+
+            // Update user's isCourseEnrolled flag to true
+            updatedUser.isCourseEnrolled = true;
+            await updatedUser.save();
           }
         }
             
@@ -170,6 +245,7 @@ module.exports.bulkEnrollStudents = async (req, res) => {
         profilePicture: s['Profile Picture'],
         role: 'user',
         isAddedByAdmin: true,
+        isCompleted: true,
         studentId: await generateStudentId()
       }))
     );
@@ -185,6 +261,10 @@ module.exports.bulkEnrollStudents = async (req, res) => {
         if (course) {
             const enrollment = new Enrollment({ user: userId, course: course._id });
             await enrollment.save();
+
+            // Update user's isCourseEnrolled flag to true
+            insertedUsers[i].isCourseEnrolled = true;
+            await insertedUsers[i].save();            
         }
     }
 

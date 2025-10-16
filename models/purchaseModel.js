@@ -9,7 +9,12 @@ const purchaseSchema = new mongoose.Schema({
     course: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'courses',
-        required: true
+        required: false
+    },
+    masterclass: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'masterclasses',
+        required: false
     },
     purchasetype:{
         type: String,
@@ -20,7 +25,7 @@ const purchaseSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
-    masterclassamount:{
+    masterClassAmount:{
         type: Number,
         required: false,
         default: 0
@@ -36,6 +41,15 @@ const purchaseSchema = new mongoose.Schema({
     paymentId: {
         type: String,
         required: true
+    },
+    paymentMode: {
+        type: String,
+        default: 'online',
+        enum: ['cash', 'online']
+    },
+    paymentResponse: {
+        type: Object,
+        required: false
     },
     status: {
         type: String,

@@ -11,14 +11,23 @@ module.exports.getDashboardStats = async (req, res) => {
     // 1. Total Enrolled (total purchases)
     //const totalEnrolled = await Purchase.countDocuments();
 
-    const courses = await Course.find({}, 'noOfEnrollements');
-    const totalEnrolled = courses.reduce((sum, course) => sum + (course.noOfEnrollements || 0), 0);
+    //const courses = await Course.find({}, 'noOfEnrollements');
+    //const totalEnrolled = courses.reduce((sum, course) => sum + (course.noOfEnrollements || 0), 0);
 
-    const masterClasses = await MasterClass.find({}, 'noOfRegisteredUsers');
-    const totalMasterClassRegistered = masterClasses.reduce((sum, masterClass) => sum + (masterClass.noOfRegisteredUsers || 0), 0);
+    const courses = await User.find({}, 'isCourseEnrolled');
+    const totalEnrolled = courses.reduce((sum, course) => sum + (course.isCourseEnrolled ? 1 : 0), 0);
+
+    //const masterClasses = await MasterClass.find({}, 'noOfRegisteredUsers');
+    //const totalMasterClassRegistered = masterClasses.reduce((sum, masterClass) => sum + (masterClass.noOfRegisteredUsers || 0), 0);
+
+    const masterClasses = await User.find({}, 'isMasterClassEnrolled');
+    const totalMasterClassRegistered = masterClasses.reduce((sum, masterClass) => sum + (masterClass.isMasterClassEnrolled ? 1 : 0), 0);
+
+    // 2. Total Master Class
+    const totalMasterClasses = await MasterClass.countDocuments();
 
     // 2. Total Instructor
-    const totalInstructor = await Instructor.countDocuments();
+    const totalInstructors = await Instructor.countDocuments();
 
     // 3. New Reg (users registered in last 7 days)
     const sevenDaysAgo = new Date();
@@ -63,9 +72,10 @@ module.exports.getDashboardStats = async (req, res) => {
     res.status(200).json({
       totalEnrolled,
       totalMasterClassRegistered,
-      totalInstructor,
+      totalInstructors,
       newReg,
       totalCourses,
+      totalMasterClasses,
       totalRevenue,
       totalStudents,
       activeStudents,

@@ -35,6 +35,8 @@ const userSchema = new mongoose.Schema({
     role: { type: String, default: 'user', enum: ['user', 'admin'] },
     lastLogin: {  type: Date, default: null },
     isAddedByAdmin: { type: Boolean, default: false  }, // who added this user (admin/signup)
+    isCourseEnrolled: { type: Boolean, default: false  }, // If course is added/assigned to user
+    isMasterClassEnrolled: { type: Boolean, default: false  }, // If master class is added/assigned to user   
 
 }, { timestamps: true });
 
