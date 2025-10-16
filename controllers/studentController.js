@@ -1,9 +1,12 @@
 const User = require('../models/userModel');
 const Course = require('../models/courseModel');
+const MasterClass = require('../models/masterClassModel');
 const csv = require('csvtojson');
 const fs = require('fs');
 const Enrollment = require('../models/enrollmentModel');
+const MasterClassEnrollment = require('../models/masterClassEnrollmentModel');
 const getFullUrl = require('../utils/getFullUrl');
+const generateStudentId = require('../utils/generateStudentId');
 
 module.exports.listAllStudents = async (req, res) => {
   try {
@@ -45,7 +48,7 @@ module.exports.listAllSignUps = async (req, res) => {
 module.exports.listAllEnrolledUsers = async (req, res) => {
   try {
     const users = await User.find({ isCourseEnrolled: true })
-      .select('profilePicture firstName lastName email phoneNumberNumber createdAt lastLogin');
+      .select('studentId profilePicture firstName lastName email phoneNumberNumber createdAt lastLogin isActive');
 
     const students = await Promise.all(users.map(async (user) => {
       const enrollments = await Enrollment.find({ user: user._id }).populate('course', 'title price');
@@ -83,7 +86,7 @@ module.exports.listAllEnrolledUsers = async (req, res) => {
 module.exports.listAllMasterClassEnrolledUsers = async (req, res) => {
   try {
     const users = await User.find({ isMasterClassEnrolled: true })
-      .select('profilePicture firstName lastName email phoneNumberNumber createdAt lastLogin');
+      .select('studentId profilePicture firstName lastName email phoneNumberNumber createdAt lastLogin isActive');
 
     const students = await Promise.all(users.map(async (user) => {
       const enrollments = await MasterClassEnrollment.find({ user: user._id }).populate('masterClass', 'title price');
@@ -108,7 +111,7 @@ module.exports.listAllMasterClassEnrolledUsers = async (req, res) => {
 
 
 /** Auto-generate studentId */
-async function generateStudentId() {
+/*async function generateStudentId() {
   const PREFIX = 'STU';
   const DIGIT_LENGTH = 6;
   const lastStudent = await User.findOne({ studentId: { $regex: new RegExp(`^${PREFIX}\\d{${DIGIT_LENGTH}}$`) } })
@@ -119,7 +122,7 @@ async function generateStudentId() {
     nextNumber = parseInt(lastStudent.studentId.replace(PREFIX, ''), 10) + 1;
   }
   return `${PREFIX}${nextNumber.toString().padStart(DIGIT_LENGTH, '0')}`;
-}
+}*/
 
 module.exports.addStudent = async (req, res) => {
   try {
@@ -131,7 +134,7 @@ module.exports.addStudent = async (req, res) => {
     }
     console.log('req.body:', req.body);
 
-    const { firstName, lastName, email, phoneNumber, gender, enrolledCourse, profilePicture } = req.body;
+    const { firstName, lastName, email, phoneNumber, gender, enrolledCourse, enrolledMasterClass, profilePicture } = req.body;
 
     // Check if email already exists
     const emailExists = await User.findOne({ email });
@@ -169,6 +172,13 @@ module.exports.addStudent = async (req, res) => {
       // Update user's isCourseEnrolled flag to true
       insertedUser.isCourseEnrolled = true;
       await insertedUser.save();
+    }
+    if(enrolledMasterClass){
+      const masterClassEnrollment = new MasterClassEnrollment({ user: insertedUser._id, masterClass: enrolledMasterClass });
+      await masterClassEnrollment.save(); 
+      // Update user's isMasterClassEnrolled flag to true
+      insertedUser.isMasterClassEnrolled = true;
+      await insertedUser.save();     
     }
     
     res.status(201).json({ insertedUser });

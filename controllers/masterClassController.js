@@ -54,7 +54,8 @@ module.exports.getMasterClasses = async (req, res) => {
       .populate("instructor", "fullName"); // if you want instructor details */
 
       const masterClasses = await MasterClass.find({ isSoftDelete: false })
-  .select("_id category title startDateTime endDateTime aboutMasterClass whatYouWillLearn image")
+  .select("_id category title startDateTime endDateTime aboutMasterClass whatYouWillLearn price discount discountAmount finalPrice isFree image")
+  //.select('-__v -isSoftDelete -createdAt -updatedAt')
   .populate("instructor", "fullName -_id");
 
     /*  // Flatten instructor → instructorName

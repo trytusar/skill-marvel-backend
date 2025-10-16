@@ -15,6 +15,23 @@ const masterClassSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  price:{
+      type: Number,
+      required: true
+  },  
+  discount:{
+      type: Number,
+      required: false,
+      default: 0
+  },  
+  discountAmount:{
+      type: Number,
+      required: false
+  },
+  finalPrice:{
+      type: Number,
+      required: false
+  },    
   startDateTime: {
     type: Date,
     required: true

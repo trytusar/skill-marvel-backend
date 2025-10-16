@@ -42,7 +42,11 @@ const courseSchema = new mongoose.Schema({
         required: false,
         default: 0
     },  
-    discountPrice:{
+    discountAmount:{
+        type: Number,
+        required: false
+    },
+    finalPrice:{
         type: Number,
         required: false
     },  

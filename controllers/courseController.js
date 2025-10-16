@@ -6,6 +6,7 @@ const crypto = require('crypto'); // For verifying the callback signature
 require('dotenv').config();
 const axios = require('axios');
 const getFullUrl = require('../utils/getFullUrl');
+const generateStudentId = require('../utils/generateStudentId');
 
 const razorpayInstance = new Razorpay({
     key_id: process.env.RAZORPAY_KEY,
@@ -223,7 +224,7 @@ exports.purchaseCourse = async (req, res) => {
             }
             amount = price;
         } else if (purchasetype === 'masterclass') {
-            amount = course.masterclassamount; // Assuming price is stored in the course schema
+            amount = course.masterClassAmount; // Assuming price is stored in the course schema
         } else {
             return res.status(400).json({ message: 'Invalid purchase type' });
         }
