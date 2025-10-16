@@ -36,7 +36,7 @@ module.exports.listAllStudents = async (req, res) => {
 module.exports.listAllSignUps = async (req, res) => {
   try {
     const users = await User.find({ isAddedByAdmin: false })
-      .select('profilePicture firstName lastName email phoneNumberNumber createdAt lastLogin');
+      .select('profilePicture firstName lastName email phoneNumber createdAt lastLogin');
 
     res.status(200).json({ users });
   } catch (err) {
@@ -48,7 +48,7 @@ module.exports.listAllSignUps = async (req, res) => {
 module.exports.listAllEnrolledUsers = async (req, res) => {
   try {
     const users = await User.find({ isCourseEnrolled: true })
-      .select('studentId profilePicture firstName lastName email phoneNumberNumber createdAt lastLogin isActive');
+      .select('studentId profilePicture firstName lastName email phoneNumber createdAt lastLogin isActive');
 
     const students = await Promise.all(users.map(async (user) => {
       const enrollments = await Enrollment.find({ user: user._id }).populate('course', 'title price');
@@ -71,7 +71,7 @@ module.exports.listAllEnrolledUsers = async (req, res) => {
           { isCourseEnrolled: true },
           { isMasterClassEnrolled: true }
         ]
-      }).select('profilePicture firstName lastName email phoneNumberNumber createdAt lastLogin');
+      }).select('profilePicture firstName lastName email phoneNumber createdAt lastLogin');
       */
 
 
@@ -86,7 +86,7 @@ module.exports.listAllEnrolledUsers = async (req, res) => {
 module.exports.listAllMasterClassEnrolledUsers = async (req, res) => {
   try {
     const users = await User.find({ isMasterClassEnrolled: true })
-      .select('studentId profilePicture firstName lastName email phoneNumberNumber createdAt lastLogin isActive');
+      .select('studentId profilePicture firstName lastName email phoneNumber createdAt lastLogin isActive');
 
     const students = await Promise.all(users.map(async (user) => {
       const enrollments = await MasterClassEnrollment.find({ user: user._id }).populate('masterClass', 'title price');

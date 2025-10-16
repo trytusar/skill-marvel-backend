@@ -5,6 +5,8 @@ const MasterClass = require('../models/masterClassModel');
 const Purchase = require('../models/purchaseModel');
 const Inquiry = require('../models/inquiryModel');
 const ContactUs = require('../models/contactUsModel');
+const Enrollment = require('../models/enrollmentModel');
+const MasterClassEnrollment = require('../models/masterClassEnrollmentModel');
 
 module.exports.getDashboardStats = async (req, res) => {
   try {
@@ -88,5 +90,189 @@ module.exports.getDashboardStats = async (req, res) => {
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: 'Failed to fetch dashboard stats' });
+  }
+};
+
+
+
+module.exports.getCourseUserCountsAllData = async (req, res) => {
+  try {
+    const stats = await Enrollment.aggregate([
+      {
+        $group: {
+          _id: "$course",          // group by course ID
+          userCount: { $sum: 1 }   // count how many enrollments per course
+        }
+      },
+      {
+        $lookup: {
+          from: "courses",          // MongoDB collection name (lowercase plural usually)
+          localField: "_id",
+          foreignField: "_id",
+          as: "course"
+        }
+      },
+      { $unwind: "$course" },
+      {
+        $project: {
+          _id: 0,
+          courseId: "$_id",
+          courseName: "$course.title",
+          userCount: 1
+        }
+      }
+    ]);
+
+    res.status(200).json({ stats });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to get course user counts" });
+  }
+};
+
+module.exports.getMasterClassUserCountsAllData = async (req, res) => {
+  try {
+    const stats = await MasterClassEnrollment.aggregate([
+      {
+        $group: {
+          _id: "$masterClass",     // Group by MasterClass ID
+          userCount: { $sum: 1 }   // Count enrollments per MasterClass
+        }
+      },
+      {
+        $lookup: {
+          from: "masterclasses",    // MongoDB collection name for masterclasses
+          localField: "_id",
+          foreignField: "_id",
+          as: "masterClass"
+        }
+      },
+      { $unwind: "$masterClass" },
+      {
+        $project: {
+          _id: 0,
+          masterClassId: "$_id",
+          masterClassName: "$masterClass.title",
+          userCount: 1
+        }
+      }
+    ]);
+
+    res.status(200).json({ stats });
+  } catch (error) {
+    console.error("Error getting masterclass user counts:", error);
+    res.status(500).json({ error: "Failed to get masterclass user counts" });
+  }
+};
+
+module.exports.getCourseUserCounts = async (req, res) => {
+  try {
+    const { year } = req.query;
+    const matchStage = {};
+
+    // ✅ If year is passed, filter by createdAt within that year
+    if (year) {
+      const startDate = new Date(`${year}-01-01T00:00:00.000Z`);
+      const endDate = new Date(`${year}-12-31T23:59:59.999Z`);
+      matchStage.createdAt = { $gte: startDate, $lte: endDate };
+    }
+
+    const pipeline = [];
+
+    // Add match stage only if year filter exists
+    if (Object.keys(matchStage).length > 0) {
+      pipeline.push({ $match: matchStage });
+    }
+
+    pipeline.push(
+      {
+        $group: {
+          _id: "$course",           // group by course ID
+          userCount: { $sum: 1 }    // count enrollments per course
+        }
+      },
+      {
+        $lookup: {
+          from: "courses",
+          localField: "_id",
+          foreignField: "_id",
+          as: "course"
+        }
+      },
+      { $unwind: "$course" },
+      {
+        $project: {
+          _id: 0,
+          courseId: "$_id",
+          courseName: "$course.title",
+          userCount: 1
+        }
+      }
+    );
+
+    const stats = await Enrollment.aggregate(pipeline);
+
+    res.status(200).json({ stats });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to get course user counts" });
+  }
+};
+
+module.exports.getMasterClassUserCounts = async (req, res) => {
+  try {
+    const { year } = req.query;
+    const pipeline = [];
+
+    // ✅ If year is present, filter enrollments by year of enrolledAt
+    if (year) {
+      const startOfYear = new Date(`${year}-01-01T00:00:00.000Z`);
+      const endOfYear = new Date(`${Number(year) + 1}-01-01T00:00:00.000Z`);
+      pipeline.push({
+        $match: {
+          enrolledAt: {
+            $gte: startOfYear,
+            $lt: endOfYear
+          }
+        }
+      });
+    }
+
+    // Group by masterClass and count
+    pipeline.push({
+      $group: {
+        _id: "$masterClass",
+        userCount: { $sum: 1 }
+      }
+    });
+
+    // Join with masterclasses collection
+    pipeline.push({
+      $lookup: {
+        from: "masterclasses",
+        localField: "_id",
+        foreignField: "_id",
+        as: "masterClass"
+      }
+    });
+
+    pipeline.push({ $unwind: "$masterClass" });
+
+    // Final shape of response
+    pipeline.push({
+      $project: {
+        _id: 0,
+        masterClassId: "$_id",
+        masterClassName: "$masterClass.title",
+        userCount: 1
+      }
+    });
+
+    const stats = await MasterClassEnrollment.aggregate(pipeline);
+    res.status(200).json({ stats });
+
+  } catch (error) {
+    console.error("Error getting masterclass user counts:", error);
+    res.status(500).json({ error: "Failed to get masterclass user counts" });
   }
 };

@@ -5,5 +5,7 @@ const auth = require('../middlewares/authMiddleware');
 
 // Dashboard stats route (protected, admin only)
 router.get('/dashboard-stats', auth.authMiddleware, dashboardController.getDashboardStats);
+router.get('/course-stats', auth.authMiddleware, dashboardController.getCourseUserCounts);
+router.get('/masterclass-stats', auth.authMiddleware, dashboardController.getMasterClassUserCounts);
 
 module.exports = router;
