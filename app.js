@@ -16,6 +16,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const dashboardRoutes = require('./routes/dashboardRouter.js');
 const studentRoutes = require('./routes/studentRoute');
 const bannerRoutes = require('./routes/bannerRoutes');
+const razorpayWebhookRoutes = require('./routes/razorpayWebhookRoutes');
 
 
 const app = express();
@@ -45,6 +46,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/student', studentRoutes);
 app.use('/api/banner', bannerRoutes);
+app.use('/api/razorpay', razorpayWebhookRoutes);
 
 
 // Connect to MongoDB

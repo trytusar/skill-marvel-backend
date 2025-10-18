@@ -1,4 +1,5 @@
 const Course = require('../models/courseModel');
+const MasterClass = require('../models/masterClassModel');
 const Purchase = require('../models/purchaseModel');
 const User = require('../models/userModel');
 const Razorpay = require('razorpay');
@@ -100,36 +101,45 @@ module.exports.deleteCourse = async (req, res) => {
 exports.checkout = async (req, res) => {
     try{
         const courseId = req.params.courseId;
-        const purchasetype = req.body.purchasetype;
-        const course = await Course.findById(courseId);
-        if(!course){
-            return res.status(404).json({ error: 'Course not found' });
-        }
-        let courseDetails = {};
-        if(purchasetype === 'enroll'){
-            courseDetails = { 
+        const masterClassId = req.params.masterClassId;
+        const purchasetype = req.body.purchasetype;        
+        let purchaseDetails = {};
+        if(purchasetype === 'course'){
+            const course = await Course.findById(courseId);
+            if(!course){
+                return res.status(404).json({ error: 'Course not found' });
+            }
+            purchaseDetails = { 
                 id: course._id,
                 title: course.title,
                 description: course.description,
                 price: course.price,
                 discount: course.discount,
+                discountAmount: course.discountAmount,
+                finalPrice: course.finalPrice,
                 purchaseType: purchasetype,
             }
         }
         else if(purchasetype === 'masterclass'){
-            courseDetails = {
-                id: course._id,
-                title: course.title,
-                description: course.description,
-                price: course.masterclassamount,
-                discount: 0,
+            const masterClass = await MasterClass.findById(masterClassId);
+            if(!masterClass){
+                return res.status(404).json({ error: 'Masterclass not found' });
+            }
+            purchaseDetails = {
+                id: masterClass._id,
+                title: masterClass.title,
+                description: masterClass.description,
+                price: masterClass.price,
+                discount: masterClass.discount,
+                discountAmount: masterClass.discountAmount,
+                finalPrice: masterClass.finalPrice,
                 purchaseType: purchasetype,
             }
         }
         else{
             return res.status(400).json({ error: 'Invalid purchase type' });
         }
-        res.status(200).json({ courseDetails });
+        res.status(200).json({ purchaseDetails });
     }
     catch(err){
         console.log(err);
@@ -137,70 +147,71 @@ exports.checkout = async (req, res) => {
     }
 };
 
-// exports.purchaseCourse = async (req, res) => {
-//     try {
-//         const userId = req.user.id; // Get the user ID from the request
-//         const courseId = req.params.courseId; // Get course ID from the request parameters
-//         const purchasetype = req.body.purchasetype; // Get the purchase type from the request body
+exports.purchaseCourse = async (req, res) => {
+    try {
+        const userId = req.user.id; // Get the user ID from the request
+        const courseId = req.params.courseId; // Get course ID from the request parameters
+        const purchasetype = req.body.purchasetype; // Get the purchase type from the request body
         
-//         // Find the course
-//         const course = await Course.findById(courseId);
-//         if (!course) {
-//             return res.status(404).json({ message: 'Course not found' });
-//         }
+        // Find the course
+        const course = await Course.findById(courseId);
+        if (!course) {
+            return res.status(404).json({ message: 'Course not found' });
+        }
 
-//         // Get the price of the course
-//         let amount = 0;
-//         if(purchasetype === 'enroll') {
-//             // Calculate price after discount if applicable
-//             let price = course.price;
-//             if (course.discount && course.discount > 0) {
-//             price = price - (price * course.discount / 100);
-//             }
-//             amount = price;
-//         }
-//         else if(purchasetype === 'masterclass') amount = course.masterclassamount; // Assuming price is stored in the course schema
-//         else return res.status(400).json({ message: 'Invalid purchase type' });
+        // Get the price of the course
+        let amount = 0;
+        if(purchasetype === 'course') {
+            // Calculate price after discount if applicable
+            let price = course.price;
+            if (course.discount && course.discount > 0) {
+            price = price - (price * course.discount / 100);
+            }
+            amount = price;
+        }
+        else if(purchasetype === 'masterclass') amount = course.masterclassamount; // Assuming price is stored in the course schema
+        else return res.status(400).json({ message: 'Invalid purchase type' });
     
 
-//         // Create a Razorpay order for the course purchase
-//         const options = {
-//             amount: amount * 100, // amount in paisa
-//             currency: "INR",
-//             receipt: `receipt_${Date.now()}`,
-//             payment_capture: '1', // auto capture
-//         };
+        // Create a Razorpay order for the course purchase
+        const options = {
+            amount: amount * 100, // amount in paisa
+            currency: "INR",
+            receipt: `receipt_${Date.now()}`,
+            payment_capture: '1', // auto capture
+        };
 
-//         const order = await razorpayInstance.orders.create(options);
+        const order = await razorpayInstance.orders.create(options);
 
-//         // Create a new purchase document with status 'pending'
-//         const newPurchase = new Purchase({
-//             user: userId,
-//             purchasetype: purchasetype,
-//             course: courseId,
-//             amount: amount,
-//             orderId: order.id,
-//             paymentId: null, // Will be filled after payment success
-//             status: 'pending'
-//         });
+        // Create a new purchase document with status 'pending'
+        const newPurchase = new Purchase({
+            user: userId,
+            purchasetype: purchasetype,
+            course: courseId,
+            amount: amount,
+            orderId: order.id,
+            paymentId: null, // Will be filled after payment success
+            status: 'pending'
+        });
 
-//         await newPurchase.save();
+        await newPurchase.save();
 
-//         console.log(order);
-//         res.status(201).json({
-//             message: 'Course purchase initiated',
-//             purchaseId: newPurchase._id,
-//             orderId: order.id,
-//             amount: amount,
-//             currency: 'INR'
-//         });
+        console.log(order);
+        res.status(201).json({
+            message: purchasetype === 'course' ? 'Course purchase initiated' : 'Masterclass purchase initiated',
+            purchaseId: newPurchase._id,
+            orderId: order.id,
+            amount: amount,
+            currency: 'INR'
+        });
         
-//     } catch (err) {
-//         console.log(err);
-//         res.status(500).json({ message: err.message });
-//     }
-// };
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ message: err.message });
+    }
+};
 
+/*
 exports.purchaseCourse = async (req, res) => {
     try {
         const userId = req.user.id; // Get the user ID from the request
@@ -216,7 +227,7 @@ exports.purchaseCourse = async (req, res) => {
 
         // Get the price of the course
         let amount = 0;
-        if (purchasetype === 'enroll') {
+        if (purchasetype === 'course') {
             // Calculate price after discount if applicable
             let price = course.price;
             if (course.discount && course.discount > 0) {
@@ -268,7 +279,7 @@ exports.purchaseCourse = async (req, res) => {
 
         // Update user's isCourseEnrolled flag to true
         const user = await User.findById(userId);
-        if (purchasetype === 'enroll') {
+        if (purchasetype === 'course') {
             user.isCourseEnrolled = true;
         } else if (purchasetype === 'masterclass') {
             user.isMasterClassEnrolled = true;
@@ -289,78 +300,78 @@ exports.purchaseCourse = async (req, res) => {
         console.error('Error initiating Zoho payment:', err.response?.data || err.message);
         res.status(500).json({ message: 'Failed to initiate course purchase' });
     }
-};
+}; */
 
 /**
  * Unified Razorpay webhook handler for course purchase payments (success and failure)
  */
 
-// exports.razorpayWebHooks = async (req, res) => {
-//     try {
-//         const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
-//         const signature = req.headers['x-razorpay-signature'];
-//         const webhookBody = JSON.stringify(req.body);
+exports.razorpayWebHooks = async (req, res) => {
+    try {
+        const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+        const signature = req.headers['x-razorpay-signature'];
+        const webhookBody = JSON.stringify(req.body);
 
-//         // Verify the webhook signature
-//         const expectedSignature = crypto.createHmac('sha256', secret).update(webhookBody).digest('hex');
-//         if (signature !== expectedSignature) {
-//             return res.status(403).json({ error: 'Invalid signature' });
-//         }
+        // Verify the webhook signature
+        const expectedSignature = crypto.createHmac('sha256', secret).update(webhookBody).digest('hex');
+        if (signature !== expectedSignature) {
+            return res.status(403).json({ error: 'Invalid signature' });
+        }
 
-//         const eventType = req.body.event;
-//         const paymentEntity = req.body.payload && req.body.payload.payment && req.body.payload.payment.entity;
-//         if (!paymentEntity) {
-//             return res.status(400).json({ error: 'Invalid payload' });
-//         }
+        const eventType = req.body.event;
+        const paymentEntity = req.body.payload && req.body.payload.payment && req.body.payload.payment.entity;
+        if (!paymentEntity) {
+            return res.status(400).json({ error: 'Invalid payload' });
+        }
 
-//         const paymentId = paymentEntity.id;
-//         const razorpayOrderId = paymentEntity.order_id;
+        const paymentId = paymentEntity.id;
+        const razorpayOrderId = paymentEntity.order_id;
 
-//         // Find the purchase by Razorpay order ID
-//         const purchase = await Purchase.findOne({ orderId: razorpayOrderId }).populate('user course');
-//         if (!purchase) {
-//             return res.status(404).json({ success: false, message: 'Purchase not found' });
-//         }
+        // Find the purchase by Razorpay order ID
+        const purchase = await Purchase.findOne({ orderId: razorpayOrderId }).populate('user course');
+        if (!purchase) {
+            return res.status(404).json({ success: false, message: 'Purchase not found' });
+        }
 
-//         const course = await Course.findById(purchase.course);
-//         if (!course) {
-//             return res.status(404).json({ success: false, message: 'Course not found' });
-//         }
+        const course = await Course.findById(purchase.course);
+        if (!course) {
+            return res.status(404).json({ success: false, message: 'Course not found' });
+        }
 
-//         if (eventType === 'payment.captured') {
-//             // Payment success logic
-//             if (purchase.status !== 'completed') {
-//                 purchase.status = 'completed';
-//                 purchase.paymentId = paymentId;
-//                 await purchase.save();
-//                 // Optionally, enroll user in course or send confirmation email here
-//             }
-//             return res.status(200).json({
-//                 success: true,
-//                 message: 'Payment captured and purchase confirmed',
-//                 purchaseId: purchase._id,
-//             });
-//         } else if (eventType === 'payment.failed') {
-//             // Payment failure logic
-//             if (purchase.status !== 'failed') {
-//                 purchase.status = 'failed';
-//                 await purchase.save();
-//                 // Optionally, handle any course slot restoration or user notification here
-//             }
-//             return res.status(200).json({
-//                 success: false,
-//                 message: paymentEntity.error_description || 'Payment failed',
-//                 errorCode: paymentEntity.error_code,
-//             });
-//         } else {
-//             return res.status(400).json({ error: 'Unhandled event type' });
-//         }
-//     } catch (err) {
-//         console.log(err);
-//         return res.status(500).json({
-//             success: false,
-//             message: 'Internal server error',
-//             error: err.message,
-//         });
-//     }
-// };
+        if (eventType === 'payment.captured') {
+            // Payment success logic
+            if (purchase.status !== 'completed') {
+                purchase.status = 'completed';
+                purchase.paymentId = paymentId;
+                await purchase.save();
+                // Optionally, enroll user in course or send confirmation email here
+            }
+            return res.status(200).json({
+                success: true,
+                message: 'Payment captured and purchase confirmed',
+                purchaseId: purchase._id,
+            });
+        } else if (eventType === 'payment.failed') {
+            // Payment failure logic
+            if (purchase.status !== 'failed') {
+                purchase.status = 'failed';
+                await purchase.save();
+                // Optionally, handle any course slot restoration or user notification here
+            }
+            return res.status(200).json({
+                success: false,
+                message: paymentEntity.error_description || 'Payment failed',
+                errorCode: paymentEntity.error_code,
+            });
+        } else {
+            return res.status(400).json({ error: 'Unhandled event type' });
+        }
+    } catch (err) {
+        console.log(err);
+        return res.status(500).json({
+            success: false,
+            message: 'Internal server error',
+            error: err.message,
+        });
+    }
+};

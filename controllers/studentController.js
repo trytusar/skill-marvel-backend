@@ -52,7 +52,7 @@ module.exports.listAllEnrolledUsers = async (req, res) => {
 
     const students = await Promise.all(users.map(async (user) => {
       const enrollments = await Enrollment.find({ user: user._id }).populate('course', 'title price');
-      console.log('Enrollments for user', user._id, enrollments);
+      //console.log('Enrollments for user', user._id, enrollments);
       return {
         ...user.toObject(),
         enrolledCourses: enrollments
