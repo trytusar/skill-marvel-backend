@@ -22,6 +22,11 @@ const instructorSchema = new mongoose.Schema({
         ref: 'courses',
         required: false
     },
+    assignedMasterClass: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'masterclasses',
+        required: false
+    },
     profilePicture: {
         type: String,
         required: false

@@ -40,7 +40,8 @@ exports.markAsRegistered = async (req, res) => {
         if (!inquiry) {
             return res.status(404).json({ error: 'Inquiry not found' });
         }
-        inquiry.isRegistered = true;
+        const isRegistered = inquiry.isRegistered;
+        inquiry.isRegistered = !isRegistered;
         await inquiry.save();
         res.status(200).json({ message: 'Inquiry marked as registered' });
     } catch (err) {

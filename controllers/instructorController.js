@@ -1,5 +1,6 @@
 const Instructor = require('../models/instructorModel');
 const Course = require('../models/courseModel');
+const MasterClass = require('../models/masterClassModel');
 const getFullUrl = require('../utils/getFullUrl');
 
 
@@ -22,11 +23,28 @@ exports.addInstructor = async (req, res) => {
             }
         }        
         
+        // Optionally validate assignedCourse exists
+        if(assignedCourse){
+            const course = await Course.findById(assignedCourse);
+            if (!course) {
+                return res.status(400).json({ error: 'Assigned course not found' });
+            }
+        }   
+        
+        // Optionally validate assignedMasterClass exists
+        if(assignedMasterClass){
+            const masterClass = await MasterClass.findById(assignedMasterClass);
+            if (!masterClass) {
+                return res.status(400).json({ error: 'Assigned master class not found' });
+            }
+        }
+                    
         const instructor = new Instructor({
             fullName,
             email,
             phone,
             assignedCourse,
+            assignedMasterClass,
             profilePicture,
             yearsOfExperience,
             expertise
@@ -41,7 +59,9 @@ exports.addInstructor = async (req, res) => {
 
 exports.getInstructors = async (req, res) => {
     try {
-        const instructors = await Instructor.find().populate('assignedCourse', 'title').populate('assignedCourse', 'title');
+        const instructors = await Instructor.find().populate('assignedCourse', 'title')
+        .populate('assignedCourse', 'title')
+        .populate('assignedMasterClass', 'title');
         res.status(200).json({ instructors });
     } catch (err) {
         console.log(err);
@@ -51,7 +71,9 @@ exports.getInstructors = async (req, res) => {
 
 exports.getInstructorById = async (req, res) => {
     try {
-        const instructor = await Instructor.findById(req.params.id).populate('assignedCourse', 'title');
+        const instructor = await Instructor.findById(req.params.id)
+        .populate('assignedCourse', 'title')
+        .populate('assignedMasterClass', 'title');
         if (!instructor) {
             return res.status(404).json({ error: 'Instructor not found' });
         }
