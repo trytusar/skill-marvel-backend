@@ -172,10 +172,11 @@ exports.purchaseCourse = async (req, res) => {
         else if(purchasetype === 'masterclass') amount = course.masterclassamount; // Assuming price is stored in the course schema
         else return res.status(400).json({ message: 'Invalid purchase type' });
     
+        console.log('amount:', amount);
 
         // Create a Razorpay order for the course purchase
         const options = {
-            amount: amount * 100, // amount in paisa
+            amount: Math.round(amount * 100), // amount in paisa (must be integer)
             currency: "INR",
             receipt: `receipt_${Date.now()}`,
             payment_capture: '1', // auto capture

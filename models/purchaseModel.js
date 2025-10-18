@@ -19,7 +19,7 @@ const purchaseSchema = new mongoose.Schema({
     purchasetype:{
         type: String,
         required: true,
-        enum: ['enroll', 'masterclass']
+        enum: ['course', 'masterclass']
     },
     amount: {
         type: Number,
@@ -40,7 +40,7 @@ const purchaseSchema = new mongoose.Schema({
     },
     paymentId: {
         type: String,
-        required: true
+        required: false
     },
     paymentMode: {
         type: String,
