@@ -4,10 +4,10 @@ exports.createInquiry = async (req, res) => {
     try {
         const inquiry = new ContactUs(req.body);
         await inquiry.save();
-        res.status(201).json({ message: 'Inquiry submitted successfully', inquiry });
+        res.status(201).json({ message: 'Contact Us submitted successfully', contact });
     } catch (err) {
         console.log(err);
-        res.status(500).json({ error: 'Failed to submit inquiry' });
+        res.status(500).json({ error: 'Failed to submit Contact Us' });
     }
 };
 
