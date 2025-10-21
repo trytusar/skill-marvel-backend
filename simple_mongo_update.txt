@@ -1,0 +1,26 @@
+# Simple MongoDB Update Command
+# Copy and paste this command in MongoDB shell or MongoDB Compass
+
+# Single command to update all course image URLs
+db.courses.updateMany(
+    { image: { $regex: "http://3.7.149.39:4000/uploads/" } },
+    [
+        {
+            $set: {
+                image: {
+                    $replaceAll: {
+                        input: "$image",
+                        find: "http://3.7.149.39:4000/uploads/",
+                        replacement: "https://backend.skillmarvel.com/uploads/"
+                    }
+                }
+            }
+        }
+    ]
+);
+
+# Verify the update
+db.courses.find(
+    { image: { $regex: "https://backend.skillmarvel.com/uploads/" } },
+    { title: 1, image: 1 }
+).limit(5);

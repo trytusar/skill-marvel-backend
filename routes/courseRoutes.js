@@ -22,8 +22,10 @@ router.put('/update-course/:id',auth.authMiddleware,upload.single('image'),cours
 router.get('/get-courses',courseController.getCourses);
 router.get('/get-course/:id',courseController.getCourseById);
 router.delete('/delete-course/:id',auth.authMiddleware,courseController.deleteCourse);
-router.put('/:courseId/checkout',courseController.checkout);
-router.put('/purchase-course/:courseId',auth.authMiddleware,courseController.purchaseCourse);
-// router.post('/razorpay-webhook', courseController.razorpayWebHooks);
+//router.put('/:courseId/checkout',courseController.checkout);
+//router.put('/purchase-course/:courseId',auth.authMiddleware,courseController.purchaseCourse);
+//router.post('/payment-success',courseController.paymentSuccess);
+//router.post('/verify-payment',courseController.verifyPayment);
+//router.post('/razorpay-webhook', courseController.razorpayWebHooks);
 
 module.exports = router;

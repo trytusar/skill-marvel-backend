@@ -1,13 +1,31 @@
 const User = require('../models/userModel');
+const Enrollment = require('../models/enrollmentModel');
+const MasterClassEnrollment = require('../models/masterClassEnrollmentModel');
+
 const getFullUrl = require('../utils/getFullUrl');
 
 module.exports.getUserProfile = async (req, res) => {
     try{
+        //console.log('req.user.id:', req.user.id);
+        //console.log('req.user:', req.user);
         const user = await User.findById(req.user.id).select('-__v -createdAt -updatedAt');
         if(!user){
             return res.status(404).json({ error: 'User not found' });
-        }
-        res.status(200).json({ user });
+        } 
+        
+        // Fetch enrolled courses for this user
+        const enrollments = await Enrollment.find({ user: user._id }).populate('course', 'title price finalPrice isFree');
+        
+        // Fetch masterclass enrolled courses for this user
+        const masterClassEnrollments = await MasterClassEnrollment.find({ user: user._id }).populate('masterclass', 'title price finalPrice isFree');
+
+        const userDetails = {
+        ...user.toObject(),
+        enrolledCourses: enrollments.map(e => e.course ? e.course.title : null),
+        enrolledMasterClasses : masterClassEnrollments.map(e => e.masterClass ? e.masterClass.title : null)
+        };
+
+        res.status(200).json({ userDetails });
     }
     catch(err){
         console.log(err);

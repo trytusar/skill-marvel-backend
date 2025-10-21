@@ -18,7 +18,7 @@ const studentRoutes = require('./routes/studentRoute');
 const bannerRoutes = require('./routes/bannerRoutes');
 const razorpayWebhookRoutes = require('./routes/razorpayWebhookRoutes');
 const purchaseRoutes = require('./routes/purchaseRoutes');
-
+const paymentRoutes = require('./routes/paymentRoutes');
 
 const app = express();
 
@@ -49,6 +49,7 @@ app.use('/api/student', studentRoutes);
 app.use('/api/banner', bannerRoutes);
 app.use('/api/razorpay', razorpayWebhookRoutes);
 app.use('/api/purchase', purchaseRoutes);
+app.use('/api/payment', paymentRoutes);
 
 
 // Connect to MongoDB
