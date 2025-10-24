@@ -4,6 +4,7 @@ const User = require('../models/userModel');
 require('dotenv').config();
 const axios = require('axios');
 const getFullUrl = require('../utils/getFullUrl');
+const {calculateMasterClassPrice} = require('../utils/calculatePrice');
 
 module.exports.addMasterClass = async (req, res) => {
     try {
@@ -15,6 +16,11 @@ module.exports.addMasterClass = async (req, res) => {
             //masterClass.image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
             masterClass.image = getFullUrl.getMasterClassImageUrl(req);
         }
+        if ((masterClass.discount && masterClass.discount > 0) 
+            &&  (masterClass.discountAmount && masterClass.discountAmount > 0)) {                
+            return res.status(401).json({ error: 'Provide non zero value for only one of them: discount or discountAmount' });              
+        }
+
         const savedMasterClass = await masterClass.save();
         res.status(201).json({ savedMasterClass });
     } catch (err) {
@@ -35,6 +41,10 @@ module.exports.updateMasterClass = async (req, res) => {
         if (req.file) {
             //req.body.image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
             req.body.image = getFullUrl.getMasterClassImageUrl(req);
+        }
+        if ((masterClass.discount && masterClass.discount > 0) 
+            &&  (masterClass.discountAmount && masterClass.discountAmount > 0)) {                
+            return res.status(401).json({ error: 'Provide non zero value for only one of them: discount or discountAmount' });              
         }
         const update = await MasterClass.findByIdAndUpdate(req.params.id, req.body, { new: true });
         res.status(200).json({ message: 'Masterclass updated successfully' });
@@ -68,7 +78,15 @@ module.exports.getMasterClasses = async (req, res) => {
         formatted.forEach(mc => delete mc.instructor);
     */
 
-    res.status(200).json({ masterClasses });
+        const masterClassesWithPrice = masterClasses.map(masterClass => {
+            const priceInfo = calculateMasterClassPrice(masterClass, 0);
+            return {
+              ...masterClass.toObject(),
+              priceInfo
+            };
+          });
+
+    res.status(200).json({ masterClasses: masterClassesWithPrice });
 
     } catch (err) {
         console.log(err);
@@ -85,6 +103,10 @@ module.exports.getMasterClassById = async (req, res) => {
         if (!masterClass) {
             return res.status(404).json({ error: 'Masterclass not found' });
         }
+
+        const priceInfo = calculateMasterClassPrice(masterClass, 0);
+        masterClass.priceInfo = priceInfo;   
+
         res.status(200).json({ masterClass });
     } catch (err) {
         console.log(err);

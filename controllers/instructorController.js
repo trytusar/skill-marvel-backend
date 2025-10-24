@@ -6,7 +6,7 @@ const getFullUrl = require('../utils/getFullUrl');
 
 exports.addInstructor = async (req, res) => {
     try {
-        const { fullName, email, phone, assignedCourse, yearsOfExperience, expertise } = req.body;
+        const { fullName, email, phone, assignedCourse, assignedMasterClass, yearsOfExperience, expertise } = req.body;
         let profilePicture = '';
         if (req.file) {
             //profilePicture = req.file.path;        
@@ -33,6 +33,7 @@ exports.addInstructor = async (req, res) => {
         
         // Optionally validate assignedMasterClass exists
         if(assignedMasterClass){
+            console.log('assignedMasterClass:', assignedMasterClass);
             const masterClass = await MasterClass.findById(assignedMasterClass);
             if (!masterClass) {
                 return res.status(400).json({ error: 'Assigned master class not found' });

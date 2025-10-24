@@ -8,6 +8,7 @@ require('dotenv').config();
 const axios = require('axios');
 const getFullUrl = require('../utils/getFullUrl');
 const generateStudentId = require('../utils/generateStudentId');
+const {calculateCoursePrice, calculateMasterClassPrice} = require('../utils/calculatePrice');
 
 const razorpayInstance = new Razorpay({
     key_id: process.env.RAZORPAY_KEY,
@@ -20,6 +21,9 @@ exports.checkout = async (req, res) => {
         //console.log('req.user:', req.user);
        // console.log(' req.user.id:',  req.user.id);
        console.log('req.body:', req.body);
+
+       //const gst = 0.18;
+       const gst = 0;
         
         const purchasetype = req.body.purchasetype;        
         let purchaseDetails = {};
@@ -39,6 +43,8 @@ exports.checkout = async (req, res) => {
                 finalPrice: course.finalPrice,
                 purchaseType: purchasetype,
             }
+            const priceInfo = calculateCoursePrice(course, gst);
+            purchaseDetails.priceInfo = priceInfo;   
         }
         else if(purchasetype === 'masterclass'){
             const masterClassId = req.params.masterClassId;
@@ -46,7 +52,8 @@ exports.checkout = async (req, res) => {
             const masterClass = await MasterClass.findById(masterClassId);
             if(!masterClass){
                 return res.status(404).json({ error: 'Masterclass not found' });
-            }
+            }           
+           
             purchaseDetails = {
                 id: masterClass._id,
                 title: masterClass.title,
@@ -57,6 +64,8 @@ exports.checkout = async (req, res) => {
                 finalPrice: masterClass.finalPrice,
                 purchaseType: purchasetype,
             }
+            const priceInfo = calculateMasterClassPrice(masterClass, gst);
+            purchaseDetails.priceInfo = priceInfo;   
         }
         else{
             return res.status(400).json({ error: 'Invalid purchase type' });
@@ -76,7 +85,7 @@ exports.purchaseCourseOrMasterclass = async (req, res) => {
 
         const userId = req.user.id; // Get the user ID from the request 
         const purchasetype = req.body.purchasetype; // Get the purchase type from the request body
-        const finalPrice = req.body.finalPrice; // Get finalPrice from the request body
+        //const finalPrice = req.body.finalPrice; // Get finalPrice from the request body
         
         const user = await User.findById(userId);
         if(!user){
@@ -95,13 +104,7 @@ exports.purchaseCourseOrMasterclass = async (req, res) => {
             if (!course) {
                 return res.status(404).json({ message: 'Course not found' });
             }
-            // Calculate price after discount if applicable
-            if(finalPrice || finalPrice == 0){
-                amount = finalPrice;
-            }
-            else{
-                amount = getFinalCoursePrice(course);
-            }           
+            amount = getFinalCoursePrice(course);                   
         }
         else if(purchasetype === 'masterclass') {
             masterClassId = req.params.masterClassId; // Get masterclass ID from the request parameters
@@ -109,18 +112,14 @@ exports.purchaseCourseOrMasterclass = async (req, res) => {
             if(!masterClass){
                 return res.status(404).json({ error: 'Masterclass not found' });
             }
-            //amount = course.masterclassamount; // Assuming price is stored in the course schema
-            if(finalPrice || finalPrice == 0){
-                amount = finalPrice;
-            }
-            else{
-                amount = getFinalPrice(masterClass);
-            }
+            amount = getFinalMasterClassPrice(masterClass);    
         }
         else 
             return res.status(400).json({ message: 'Invalid purchase type' });
     
-        console.log('amount:', amount);
+        console.log('amount:', amount, masterClass);
+        const title = purchasetype === 'course' ? course.title : masterClass.title;
+        const image = purchasetype === 'course' ? course.image : masterClass.image;
 
         //START OF FREE PURCHASE LOGIC
         // If the course/masterclass is free, skip Razorpay and enroll immediately
@@ -162,11 +161,16 @@ exports.purchaseCourseOrMasterclass = async (req, res) => {
                 message: purchasetype === 'course' ? 'Course enrolled (free)' : 'Masterclass enrolled (free)',
                 purchaseId: newPurchase._id,
                 orderId: null,
+                title:title,
+                description: `Purchase of ${purchasetype} - ${title}`,
+                image: image || '/logo.png',
                 amount: 0,
                 currency: 'INR',
-                free: true
+                free: true,
             });
         } //END OF FREE PURCHASE LOGIC
+
+        amount = getAmountWithTax(amount);
 
         // Create a Razorpay order for the course purchase
         const options = {
@@ -194,12 +198,12 @@ exports.purchaseCourseOrMasterclass = async (req, res) => {
 
         console.log(order);
 
-        const title = purchasetype === 'course' ? course.title : masterClass.title;
-        const image = purchasetype === 'course' ? course.image : masterClass.image;
+        
         res.status(201).json({
             message: purchasetype === 'course' ? 'Course purchase initiated' : 'Masterclass purchase initiated',
             purchaseId: newPurchase._id,
             orderId: order.id,
+            title:title,
             amount: amount,
             currency: 'INR',
             // Razorpay configuration for frontend
@@ -234,7 +238,19 @@ exports.purchaseCourseOrMasterclass = async (req, res) => {
     }
 };
 
-function getFinalPrice(masterClass) {
+/** tax = 18% */
+function getAmountWithTax(amount) {
+   /* const tax = 18; //18%
+    let finalAmount = (amount*tax)/100;
+    finalAmount = finalAmount.toFixed(2);
+    return price; */
+
+    let finalAmount = Math.round(amount * 1.18);
+    finalAmount = finalAmount.toFixed(2);
+    return finalAmount;
+}
+
+function getFinalMasterClassPrice(masterClass) {
     let price = masterClass.price;
 
     if (masterClass.discount && masterClass.discount > 0) {
