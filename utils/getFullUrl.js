@@ -25,6 +25,14 @@ function getBannerImageUrl(req, filename) {
   return `${req.protocol}://${req.get('host')}${uploadPaths.BANNER_IMAGE}/${filename}`;
 }
 
+function getCourseSyllabusUrl(req) {
+  return `${req.protocol}://${req.get('host')}${uploadPaths.COURSE_SYLLABUS_PATH}/${req.file.filename}`;
+}
+
+function getMasterClassSyllabusUrl(req) {
+  return `${req.protocol}://${req.get('host')}${uploadPaths.MASTERCLASS_SYLLABUS_PATH}/${req.file.filename}`;
+}
+
  
 module.exports = {
   getMasterClassImageUrl,
@@ -32,7 +40,9 @@ module.exports = {
   getInstructorImageUrl,
   getUserImageUrl,
   getFullUrl,
-  getBannerImageUrl
+  getBannerImageUrl,
+  getCourseSyllabusUrl,
+  getMasterClassSyllabusUrl
 };
 
 /*

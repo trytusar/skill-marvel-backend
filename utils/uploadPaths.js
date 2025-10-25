@@ -7,4 +7,6 @@ module.exports = {
   USER_IMAGE: `${UPLOAD_BASE_URL}/users`,
   USER_CSV: `${UPLOAD_BASE_URL}/csv`,
   BANNER_IMAGE: `${UPLOAD_BASE_URL}/banner`,
+  COURSE_SYLLABUS_PATH: `${UPLOAD_BASE_URL}/course-syllabus`,
+  MASTERCLASS_SYLLABUS_PATH: `${UPLOAD_BASE_URL}/masterclass-syllabus`,
 };

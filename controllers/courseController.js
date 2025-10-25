@@ -136,3 +136,41 @@ module.exports.deleteCourse = async (req, res) => {
         res.status(500).json({ error: 'Failed to soft delete course' });
     }
 };
+module.exports.updateSyllabus = async (req, res) => {
+    try{
+        const course = await Course.findById(req.params.id);
+        if (!course) {
+            return res.status(404).json({ error: 'Course not found' });
+        }
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'You are not authorized to delete this course' });
+        }
+        
+        const updateFields = {};
+    
+        if (req.body.topics) {
+            updateFields.topics = req.body.topics;
+        }
+    
+        if(req.file){
+            updateFields.syllabus = getFullUrl.getCourseSyllabusUrl(req);
+        }         
+         
+        if (Object.keys(updateFields).length === 0) {
+            return res.status(404).json({ error: 'No valid fields to update' });
+        }
+    
+        const updatedCourse = await Course.findByIdAndUpdate(
+        req.params.id,
+        { $set: updateFields },
+        { new: true }
+        );
+
+        res.status(200).json({ message: 'Syllabus updated successfully' });
+  
+    }
+    catch(err){
+        console.log(err);
+        res.status(500).json({ error: 'Failed to update syllabus' });
+    }
+  }
