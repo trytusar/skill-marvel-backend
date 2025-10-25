@@ -2,6 +2,7 @@ const Instructor = require('../models/instructorModel');
 const Course = require('../models/courseModel');
 const MasterClass = require('../models/masterClassModel');
 const getFullUrl = require('../utils/getFullUrl');
+const {isValid, isValidNumber} = require('../utils/util');
 
 
 exports.addInstructor = async (req, res) => {
@@ -15,37 +16,36 @@ exports.addInstructor = async (req, res) => {
 
         }
 
-        // Optionally validate assignedCourse exists
-        if(assignedCourse){
+        // Process assignedCourse - convert empty string to undefined
+        let processedAssignedCourse = assignedCourse;
+        if (isValid(assignedCourse)) {
+            console.log('-----------assignedCourse:', assignedCourse);
             const course = await Course.findById(assignedCourse);
             if (!course) {
                 return res.status(400).json({ error: 'Assigned course not found' });
             }
-        }        
-        
-        // Optionally validate assignedCourse exists
-        if(assignedCourse){
-            const course = await Course.findById(assignedCourse);
-            if (!course) {
-                return res.status(400).json({ error: 'Assigned course not found' });
-            }
+        } else {
+            processedAssignedCourse = undefined;
         }   
         
-        // Optionally validate assignedMasterClass exists
-        if(assignedMasterClass){
+        // Process assignedMasterClass - convert empty string to undefined
+        let processedAssignedMasterClass = assignedMasterClass;
+        if (isValid(assignedMasterClass)) {
             console.log('assignedMasterClass:', assignedMasterClass);
             const masterClass = await MasterClass.findById(assignedMasterClass);
             if (!masterClass) {
                 return res.status(400).json({ error: 'Assigned master class not found' });
             }
-        }
+        } else {
+            processedAssignedMasterClass = undefined;
+        } 
                     
         const instructor = new Instructor({
             fullName,
             email,
             phone,
-            assignedCourse,
-            assignedMasterClass,
+            assignedCourse: processedAssignedCourse,
+            assignedMasterClass: processedAssignedMasterClass,
             profilePicture,
             yearsOfExperience,
             expertise

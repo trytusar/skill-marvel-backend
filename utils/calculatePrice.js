@@ -22,7 +22,11 @@ const MasterClass = require('../models/masterClassModel');
       discountedPercentage = (discount / price) * 100;
       discountType = "flat";
   }  
-
+  else{
+    priceAfterDiscount = price;
+    discountedPercentage = 0;
+    discountType = "None";
+  }  
    
   let gstAmount = undefined;
   // Add GST (18%)
@@ -67,6 +71,11 @@ const MasterClass = require('../models/masterClassModel');
       priceAfterDiscount = price - discount;
       discountedPercentage = (discount / price) * 100;
       discountType = "flat";
+  }
+  else{
+    priceAfterDiscount = price;
+    discountedPercentage = 0;
+    discountType = "None";
   }  
 
   let gstAmount = undefined;

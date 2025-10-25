@@ -9,6 +9,9 @@ const axios = require('axios');
 const getFullUrl = require('../utils/getFullUrl');
 const generateStudentId = require('../utils/generateStudentId');
 const {calculateCoursePrice, calculateMasterClassPrice} = require('../utils/calculatePrice');
+const Enrollment = require('../models/enrollmentModel');
+const MasterClassEnrollment = require('../models/masterClassEnrollmentModel');
+const { enrollUserInCourse, enrollUserInMasterClass } = require('../utils/enrollmentUtils');
 
 const razorpayInstance = new Razorpay({
     key_id: process.env.RAZORPAY_KEY,
@@ -139,7 +142,7 @@ exports.purchaseCourseOrMasterclass = async (req, res) => {
             await newPurchase.save();
 
             // Update user enrollment immediately
-            if (purchasetype === 'course') {
+            /*if (purchasetype === 'course') {
                 if (user) {
                     user.isCourseEnrolled = true;
                     if(!user.studentId){
@@ -154,6 +157,23 @@ exports.purchaseCourseOrMasterclass = async (req, res) => {
                         user.studentId = await generateStudentId();
                     }
                     await user.save();
+                }
+            }*/
+
+            if(purchasetype === 'course'){
+                const enrollmentResult = await enrollUserInCourse(user._id, courseId);
+                if (!enrollmentResult.success) {
+                    console.error('Course enrollment failed:', enrollmentResult.message);
+                } else if (!enrollmentResult.alreadyEnrolled) {
+                    console.log('User enrolled in course:', enrollmentResult.message);
+                }         
+            }
+            if(purchasetype === 'masterclass'){
+                const enrollmentResult = await enrollUserInMasterClass(user._id, masterClassId);
+                if (!enrollmentResult.success) {
+                  console.error('Masterclass enrollment failed:', enrollmentResult.message);
+                } else if (!enrollmentResult.alreadyEnrolled) {
+                  console.log('User enrolled in masterclass:', enrollmentResult.message);
                 }
             }
 
@@ -344,9 +364,19 @@ exports.paymentSuccess = async (req, res) => {
             await user.save();
         }
 
-        // Get course details for response
-        const course = await Course.findById(purchase.course);
-        const masterclass = await MasterClass.findById(purchase.masterclass);
+        let course = null;
+        let masterclass = null;
+
+        if(purchase.purchasetype === 'course'){
+            course = await Course.findById(purchase.course);
+            const enrollment = new Enrollment({ user: user._id, course: course._id });
+            await enrollment.save();           
+        }
+        if(purchase.purchasetype === 'masterclass'){
+            masterclass = await MasterClass.findById(purchase.masterclass);
+            const masterClassEnrollment = new MasterClassEnrollment({ user: user._id, masterClass: masterclass._id });
+            await masterClassEnrollment.save(); 
+        }
 
         res.status(200).json({
             success: true,

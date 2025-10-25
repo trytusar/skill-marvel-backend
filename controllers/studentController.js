@@ -7,6 +7,7 @@ const Enrollment = require('../models/enrollmentModel');
 const MasterClassEnrollment = require('../models/masterClassEnrollmentModel');
 const getFullUrl = require('../utils/getFullUrl');
 const generateStudentId = require('../utils/generateStudentId');
+const { enrollUserInCourse, enrollUserInMasterClass } = require('../utils/enrollmentUtils');
 
 module.exports.listAllStudents = async (req, res) => {
   try {
@@ -165,21 +166,26 @@ module.exports.addStudent = async (req, res) => {
     
 
     const insertedUser = await student.save();
-    if(enrolledCourse){
-      const enrollment = new Enrollment({ user: insertedUser._id, course: enrolledCourse });
-      await enrollment.save();
 
-      // Update user's isCourseEnrolled flag to true
-      insertedUser.isCourseEnrolled = true;
-      await insertedUser.save();
+    if(enrolledCourse){
+      // Use enrollment utility function
+      const enrollmentResult = await enrollUserInCourse(insertedUser._id, enrolledCourse);
+      if (!enrollmentResult.success) {
+        console.error('Course enrollment failed:', enrollmentResult.message);
+      } else if (!enrollmentResult.alreadyEnrolled) {
+        console.log('User enrolled in course:', enrollmentResult.message);
+      }
     }
+
     if(enrolledMasterClass){
-      const masterClassEnrollment = new MasterClassEnrollment({ user: insertedUser._id, masterClass: enrolledMasterClass });
-      await masterClassEnrollment.save(); 
-      // Update user's isMasterClassEnrolled flag to true
-      insertedUser.isMasterClassEnrolled = true;
-      await insertedUser.save();     
-    }
+      // Use enrollment utility function for masterclass
+      const enrollmentResult = await enrollUserInMasterClass(insertedUser._id, enrolledMasterClass);
+      if (!enrollmentResult.success) {
+        console.error('Masterclass enrollment failed:', enrollmentResult.message);
+      } else if (!enrollmentResult.alreadyEnrolled) {
+        console.log('User enrolled in masterclass:', enrollmentResult.message);
+      }
+    } 
     
     res.status(201).json({ insertedUser });
   } catch (err) {
@@ -203,6 +209,28 @@ module.exports.updateStudent = async (req, res) => {
 
         console.log('Update req.body:', req.body);
 
+        // Check for duplicate phone number if phoneNumber is being updated
+        if (req.body.phoneNumber) {
+            const existingUser = await User.findOne({ 
+                phoneNumber: req.body.phoneNumber,
+                _id: { $ne: req.params.id } // Exclude current user
+            });
+            if (existingUser) {
+                return res.status(409).json({ error: 'Phone number already exists' });
+            }
+        }
+
+        // Check for duplicate email if email is being updated
+        if (req.body.email) {
+            const existingUser = await User.findOne({ 
+                email: req.body.email,
+                _id: { $ne: req.params.id } // Exclude current user
+            });
+            if (existingUser) {
+                return res.status(409).json({ error: 'Email already exists' });
+            }
+        }
+
         const updatedUser = await User.findByIdAndUpdate(
             req.params.id,
             req.body,
@@ -214,16 +242,27 @@ module.exports.updateStudent = async (req, res) => {
         }
 
         let enrolledCourse = req.body.enrolledCourse;
+        let enrolledMasterClass = req.body.enrolledMasterClass;
+        
         if(enrolledCourse){
-          // Check if enrollment already exists for this user and course
-          const existingEnrollment = await Enrollment.findOne({ user: updatedUser._id, course: enrolledCourse });
-          if (!existingEnrollment) {
-            const enrollment = new Enrollment({ user: updatedUser._id, course: enrolledCourse });
-            await enrollment.save();
+          // Use enrollment utility function
+          const enrollmentResult = await enrollUserInCourse(updatedUser._id, enrolledCourse);
+          if (!enrollmentResult.success) {
+            console.error('Course enrollment failed:', enrollmentResult.message);
+            return res.status(409).json({ error: enrollmentResult.message });
+          } else if (!enrollmentResult.alreadyEnrolled) {
+            console.log('User enrolled in course:', enrollmentResult.message);
+          }
+        }
 
-            // Update user's isCourseEnrolled flag to true
-            updatedUser.isCourseEnrolled = true;
-            await updatedUser.save();
+        if(enrolledMasterClass){
+          // Use enrollment utility function for masterclass
+          const enrollmentResult = await enrollUserInMasterClass(updatedUser._id, enrolledMasterClass);
+          if (!enrollmentResult.success) {
+            console.error('Masterclass enrollment failed:', enrollmentResult.message);
+            return res.status(409).json({ error: enrollmentResult.message });
+          } else if (!enrollmentResult.alreadyEnrolled) {
+            console.log('User enrolled in masterclass:', enrollmentResult.message);
           }
         }
             
@@ -269,12 +308,23 @@ module.exports.bulkEnrollStudents = async (req, res) => {
         // Find the course by name/title
         const course = await Course.findOne({ title: courseName });
         if (course) {
-            const enrollment = new Enrollment({ user: userId, course: course._id });
+            /*const enrollment = new Enrollment({ user: userId, course: c });
             await enrollment.save();
 
             // Update user's isCourseEnrolled flag to true
             insertedUsers[i].isCourseEnrolled = true;
-            await insertedUsers[i].save();            
+            await insertedUsers[i].save();   
+            */
+
+            const enrollmentResult = await enrollUserInCourse(userId, course);
+            if (!enrollmentResult.success) {
+              console.error('Course enrollment failed:', enrollmentResult.message);
+            } else if (!enrollmentResult.alreadyEnrolled) {
+              console.log('User enrolled in course:', enrollmentResult.message);
+            }
+        }
+        else{
+          console.log("Course not found with name:", courseName);
         }
     }
 

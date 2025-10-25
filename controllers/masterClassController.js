@@ -104,10 +104,12 @@ module.exports.getMasterClassById = async (req, res) => {
             return res.status(404).json({ error: 'Masterclass not found' });
         }
 
-        const priceInfo = calculateMasterClassPrice(masterClass, 0);
-        masterClass.priceInfo = priceInfo;   
+        const priceInfo = calculateMasterClassPrice(masterClass, 0); 
+        const masterClassObj = masterClass.toObject();
+        // Add priceInfo to object
+        masterClassObj.priceInfo = priceInfo;
 
-        res.status(200).json({ masterClass });
+        res.status(200).json({ masterClass: masterClassObj });
     } catch (err) {
         console.log(err);
         res.status(500).json({ error: 'Failed to get masterclass' });
