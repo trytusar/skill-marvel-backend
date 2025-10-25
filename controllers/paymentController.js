@@ -86,6 +86,9 @@ exports.purchaseCourseOrMasterclass = async (req, res) => {
         //console.log('req.user:', req.user);
         //console.log(' req.user.id:',  req.user.id);
 
+        //const gst = 0.18;
+        const gst = 0;
+
         const userId = req.user.id; // Get the user ID from the request 
         const purchasetype = req.body.purchasetype; // Get the purchase type from the request body
         //const finalPrice = req.body.finalPrice; // Get finalPrice from the request body
@@ -107,7 +110,10 @@ exports.purchaseCourseOrMasterclass = async (req, res) => {
             if (!course) {
                 return res.status(404).json({ message: 'Course not found' });
             }
-            amount = getFinalCoursePrice(course);                   
+            //amount = getFinalCoursePrice(course);    
+            const priceInfo = calculateCoursePrice(course, gst);
+            amount = priceInfo.finalPrice;       
+            console.log("priceInfo:", priceInfo);         
         }
         else if(purchasetype === 'masterclass') {
             masterClassId = req.params.masterClassId; // Get masterclass ID from the request parameters
@@ -115,7 +121,10 @@ exports.purchaseCourseOrMasterclass = async (req, res) => {
             if(!masterClass){
                 return res.status(404).json({ error: 'Masterclass not found' });
             }
-            amount = getFinalMasterClassPrice(masterClass);    
+            //amount = getFinalMasterClassPrice(masterClass);    
+            const priceInfo = calculateMasterClassPrice(masterClass, gst);
+            amount = priceInfo.finalPrice;
+            console.log("priceInfo:", priceInfo);
         }
         else 
             return res.status(400).json({ message: 'Invalid purchase type' });
@@ -131,7 +140,7 @@ exports.purchaseCourseOrMasterclass = async (req, res) => {
                 user: userId,
                 purchasetype: purchasetype,
                 course: purchasetype === 'course' ? courseId : undefined,
-                masterclass: purchasetype === 'masterclass' ? masterClassId : undefined,
+                masterClass: purchasetype === 'masterclass' ? masterClassId : undefined,
                 amount: 0,
                 orderId: null,
                 paymentId: 'FREE',
@@ -164,14 +173,17 @@ exports.purchaseCourseOrMasterclass = async (req, res) => {
                 const enrollmentResult = await enrollUserInCourse(user._id, courseId);
                 if (!enrollmentResult.success) {
                     console.error('Course enrollment failed:', enrollmentResult.message);
+                    return res.status(404).json({ error: enrollmentResult.message });
                 } else if (!enrollmentResult.alreadyEnrolled) {
                     console.log('User enrolled in course:', enrollmentResult.message);
                 }         
             }
             if(purchasetype === 'masterclass'){
+                console.log("masterClassId:", masterClassId);
                 const enrollmentResult = await enrollUserInMasterClass(user._id, masterClassId);
                 if (!enrollmentResult.success) {
                   console.error('Masterclass enrollment failed:', enrollmentResult.message);
+                  return res.status(404).json({ error: enrollmentResult.message });
                 } else if (!enrollmentResult.alreadyEnrolled) {
                   console.log('User enrolled in masterclass:', enrollmentResult.message);
                 }
@@ -190,7 +202,7 @@ exports.purchaseCourseOrMasterclass = async (req, res) => {
             });
         } //END OF FREE PURCHASE LOGIC
 
-        amount = getAmountWithTax(amount);
+        //amount = getAmountWithTax(amount); // Not required
 
         // Create a Razorpay order for the course purchase
         const options = {
@@ -207,7 +219,7 @@ exports.purchaseCourseOrMasterclass = async (req, res) => {
             user: userId,
             purchasetype: purchasetype,
             course: purchasetype === 'course' ? courseId : undefined,
-            masterclass: purchasetype === 'masterclass' ? masterClassId : undefined,
+            masterClass: purchasetype === 'masterclass' ? masterClassId : undefined,
             amount: amount,
             orderId: order.id,
             paymentId: null, // Will be filled after payment success
@@ -373,7 +385,7 @@ exports.paymentSuccess = async (req, res) => {
             await enrollment.save();           
         }
         if(purchase.purchasetype === 'masterclass'){
-            masterclass = await MasterClass.findById(purchase.masterclass);
+            masterclass = await MasterClass.findById(purchase.masterClass);
             const masterClassEnrollment = new MasterClassEnrollment({ user: user._id, masterClass: masterclass._id });
             await masterClassEnrollment.save(); 
         }
@@ -456,98 +468,7 @@ exports.verifyPayment = async (req, res) => {
         });
     }
 };
-
-/*
-exports.purchaseCourse = async (req, res) => {
-    try {
-        const userId = req.user.id; // Get the user ID from the request
-        const courseId = req.params.courseId; // Get course ID from the request parameters
-        const purchasetype = req.body.purchasetype; // Get the purchase type from the request body
-        const { email, name, phone } = req.body; // Get customer details from the request body
-
-        // Find the course
-        const course = await Course.findById(courseId);
-        if (!course) {
-            return res.status(404).json({ message: 'Course not found' });
-        }
-
-        // Get the price of the course
-        let amount = 0;
-        if (purchasetype === 'course') {
-            // Calculate price after discount if applicable
-            let price = course.price;
-            if (course.discount && course.discount > 0) {
-                price = price - (price * course.discount / 100);
-            }
-            amount = price;
-        } else if (purchasetype === 'masterclass') {
-            amount = course.masterClassAmount; // Assuming price is stored in the course schema
-        } else {
-            return res.status(400).json({ message: 'Invalid purchase type' });
-        }
-
-        console.log(process.env.ZOHO_API_KEY, process.env.ZOHO_ACCOUNT_ID);
-
-        // Create a Zoho Payments session
-        const zohoResponse = await axios.post(
-            `https://payments.zoho.in/api/v1/paymentsessions?account_id=${process.env.ZOHO_ACCOUNT_ID}`,
-            {
-                amount: amount.toFixed(2), // Zoho expects amount as a string with 2 decimal places (e.g., "100.50")
-                currency: 'INR',
-                description: `Purchase of ${purchasetype} for course: ${course.title}`,
-                invoice_number: `INV-${Date.now()}`, // Unique invoice number
-                meta_data: [
-                    { key: 'courseId', value: courseId },
-                    { key: 'userId', value: userId },
-                    { key: 'purchasetype', value: purchasetype }
-                ]
-            },
-            {
-                headers: {
-                    Authorization: `Zoho-oauthtoken ${process.env.ZOHO_API_KEY}`,
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
-
-        // Create a new purchase document with status 'pending'
-        const newPurchase = new Purchase({
-            user: userId,
-            purchasetype: purchasetype,
-            course: courseId,
-            amount: amount,
-            paymentsSessionId: zohoResponse.data.payments_session.payments_session_id, // Store Zoho session ID
-            paymentId: null, // Will be filled after payment success via webhook
-            status: 'pending'
-        });
-
-        await newPurchase.save();
-
-        // Update user's isCourseEnrolled flag to true
-        const user = await User.findById(userId);
-        if (purchasetype === 'course') {
-            user.isCourseEnrolled = true;
-        } else if (purchasetype === 'masterclass') {
-            user.isMasterClassEnrolled = true;
-        }
-        await user.save();
-
-        console.log(zohoResponse.data);
-        res.status(201).json({
-            message: 'Course purchase initiated',
-            purchaseId: newPurchase._id,
-            paymentsSessionId: zohoResponse.data.payments_session.payments_session_id, // Send session ID to frontend
-            amount: amount.toFixed(2),
-            currency: 'INR'
-        });
-
-    } catch (err) {
-        console.log(err)
-        console.error('Error initiating Zoho payment:', err.response?.data || err.message);
-        res.status(500).json({ message: 'Failed to initiate course purchase' });
-    }
-}; */
-
+ 
 /**
  * Unified Razorpay webhook handler for course purchase payments (success and failure)
  */
@@ -633,7 +554,7 @@ exports.getPurchasesByUser = async (req, res) => {
         const userId = req.user.id; // Get user ID from the request
         const purchases = await Purchase.find({ user: userId })
             .populate('course', 'title price finalPrice')
-            .populate('masterclass', 'title price finalPrice')
+            .populate('masterClass', 'title price finalPrice')
             .sort({ createdAt: -1 });
         const totalPurchases = await Purchase.countDocuments({ user: userId });
         

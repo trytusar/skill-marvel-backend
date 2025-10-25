@@ -11,7 +11,7 @@ const purchaseSchema = new mongoose.Schema({
         ref: 'courses',
         required: false
     },
-    masterclass: {
+    masterClass: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'masterclasses',
         required: false

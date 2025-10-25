@@ -177,7 +177,7 @@ exports.getWebhookEvents = async (req, res) => {
         const purchases = await Purchase.find()
             .populate('user', 'name email')
             .populate('course', 'title')
-            .populate('masterclass', 'title')
+            .populate('masterClass', 'title')
             .sort({ createdAt: -1 })
             .limit(50);
 

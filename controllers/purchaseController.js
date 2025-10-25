@@ -66,7 +66,7 @@ exports.getAllPurchases = async (req, res) => {
                 match: userFilter
             })
             .populate('course', 'title price discount')
-            .populate('masterclass', 'title price')
+            .populate('masterClass', 'title price')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit);
@@ -106,7 +106,7 @@ exports.getPurchaseById = async (req, res) => {
         const purchase = await Purchase.findById(req.params.id)
             .populate('user', 'name email phone')
             .populate('course', 'title price discount')
-            .populate('masterclass', 'title price');
+            .populate('masterClass', 'title price');
 
         if (!purchase) {
             return res.status(404).json({
@@ -288,7 +288,7 @@ exports.getPurchasesByUser = async (req, res) => {
 
         const purchases = await Purchase.find({ user: userId })
             .populate('course', 'title price')
-            .populate('masterclass', 'title price')
+            .populate('masterClass', 'title price')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limit);
@@ -355,7 +355,7 @@ exports.exportPurchases = async (req, res) => {
         const purchases = await Purchase.find()
             .populate('user', 'name email phone')
             .populate('course', 'title')
-            .populate('masterclass', 'title')
+            .populate('masterClass', 'title')
             .sort({ createdAt: -1 });
 
         // Convert to CSV format

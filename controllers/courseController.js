@@ -24,6 +24,9 @@ module.exports.addCourse = async (req, res) => {
         if(req.file){
             //course.image = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
             course.image = getFullUrl.getCourseImageUrl(req);
+        } else {
+            // Set a default image if no file is uploaded
+            course.image = '/default-course-image.jpg';
         }
 
         if ( (course.discount && course.discount > 0) 

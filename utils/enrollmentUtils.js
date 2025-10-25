@@ -89,7 +89,7 @@ const enrollUserInCourse = async (userId, courseId) => {
 };
 
 /**
- * Enroll user in a masterclass if not already enrolled
+ * Enroll user in a masterClass if not already enrolled
  * @param {string} userId - User ID
  * @param {string} masterClassId - MasterClass ID
  * @returns {Object} - Enrollment result
@@ -113,9 +113,9 @@ const enrollUserInMasterClass = async (userId, masterClassId) => {
             };
         }
 
-        // Check if masterclass exists
-        const masterclass = await MasterClass.findById(masterClassId);
-        if (!masterclass) {
+        // Check if masterClass exists
+        const masterClass = await MasterClass.findById(masterClassId);
+        if (!masterClass) {
             return {
                 success: false,
                 message: 'Masterclass not found'
@@ -125,13 +125,13 @@ const enrollUserInMasterClass = async (userId, masterClassId) => {
         // Check if enrollment already exists
         const existingEnrollment = await MasterClassEnrollment.findOne({ 
             user: userId, 
-            masterclass: masterClassId 
+            masterClass: masterClassId 
         });
 
         if (existingEnrollment) {
             return {
                 success: true,
-                message: 'User is already enrolled in this masterclass',
+                message: 'User is already enrolled in this masterClass',
                 enrollment: existingEnrollment,
                 alreadyEnrolled: true
             };
@@ -140,7 +140,7 @@ const enrollUserInMasterClass = async (userId, masterClassId) => {
         // Create new enrollment
         const enrollment = new MasterClassEnrollment({ 
             user: userId, 
-            masterclass: masterClassId 
+            masterClass: masterClassId 
         });
         await enrollment.save();
 
@@ -155,16 +155,16 @@ const enrollUserInMasterClass = async (userId, masterClassId) => {
 
         return {
             success: true,
-            message: 'User successfully enrolled in masterclass',
+            message: 'User successfully enrolled in masterClass',
             enrollment: enrollment,
             alreadyEnrolled: false
         };
 
     } catch (error) {
-        console.error('Error enrolling user in masterclass:', error);
+        console.error('Error enrolling user in masterClass:', error);
         return {
             success: false,
-            message: 'Failed to enroll user in masterclass',
+            message: 'Failed to enroll user in masterClass',
             error: error.message
         };
     }
@@ -210,7 +210,7 @@ const isUserEnrolledInCourse = async (userId, courseId) => {
 };
 
 /**
- * Check if user is enrolled in a masterclass
+ * Check if user is enrolled in a masterClass
  * @param {string} userId - User ID
  * @param {string} masterClassId - MasterClass ID
  * @returns {Object} - Enrollment status
@@ -227,7 +227,7 @@ const isUserEnrolledInMasterClass = async (userId, masterClassId) => {
 
         const enrollment = await MasterClassEnrollment.findOne({ 
             user: userId, 
-            masterclass: masterClassId 
+            masterClass: masterClassId 
         });
 
         return {
@@ -238,7 +238,7 @@ const isUserEnrolledInMasterClass = async (userId, masterClassId) => {
         };
 
     } catch (error) {
-        console.error('Error checking masterclass enrollment:', error);
+        console.error('Error checking masterClass enrollment:', error);
         return {
             success: false,
             enrolled: false,
@@ -286,9 +286,9 @@ const getUserCourseEnrollments = async (userId) => {
 };
 
 /**
- * Get all masterclasses enrolled by user
+ * Get all masterClasses enrolled by user
  * @param {string} userId - User ID
- * @returns {Object} - User's masterclass enrollments
+ * @returns {Object} - User's masterClass enrollments
  */
 const getUserMasterClassEnrollments = async (userId) => {
     try {
@@ -301,22 +301,22 @@ const getUserMasterClassEnrollments = async (userId) => {
         }
 
         const enrollments = await MasterClassEnrollment.find({ user: userId })
-            .populate('masterclass', 'title description price image')
+            .populate('masterClass', 'title description price image')
             .sort({ createdAt: -1 });
 
         return {
             success: true,
             enrollments: enrollments,
             count: enrollments.length,
-            message: `Found ${enrollments.length} masterclass enrollments`
+            message: `Found ${enrollments.length} masterClass enrollments`
         };
 
     } catch (error) {
-        console.error('Error getting user masterclass enrollments:', error);
+        console.error('Error getting user masterClass enrollments:', error);
         return {
             success: false,
             enrollments: [],
-            message: 'Failed to get masterclass enrollments',
+            message: 'Failed to get masterClass enrollments',
             error: error.message
         };
     }

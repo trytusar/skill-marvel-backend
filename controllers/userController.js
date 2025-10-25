@@ -17,7 +17,7 @@ module.exports.getUserProfile = async (req, res) => {
         const enrollments = await Enrollment.find({ user: user._id }).populate('course', 'title price finalPrice isFree');
         
         // Fetch masterclass enrolled courses for this user
-        const masterClassEnrollments = await MasterClassEnrollment.find({ user: user._id }).populate('masterclass', 'title price finalPrice isFree');
+        const masterClassEnrollments = await MasterClassEnrollment.find({ user: user._id }).populate('masterClass', 'title price finalPrice isFree');
 
         const userDetails = {
         ...user.toObject(),
