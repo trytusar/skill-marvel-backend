@@ -18,7 +18,7 @@ module.exports.addBlogs = async (req, res) => {
         } 
 
         const blog = new Blog(req.body);
-        blog.author = req.user.id;
+        //blog.author = req.user.id;
         await blog.save();
         res.status(201).json({ blog });
     }
@@ -88,7 +88,8 @@ module.exports.deleteBlog = async (req, res) => {
         if(!blog){
             return res.status(404).json({ error: 'Blog not found' });
         }
-        if(req.user.role !== 'admin' || blog.author != req.user.id){
+        //if(req.user.role !== 'admin' || blog.author != req.user.id){
+        if(req.user.role !== 'admin'){
             return res.status(403).json({ error: 'You are not authorized to delete this blog' });
         }
         await Blog.findByIdAndDelete(req.params.id);
