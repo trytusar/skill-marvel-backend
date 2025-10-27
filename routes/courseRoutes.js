@@ -33,6 +33,6 @@ router.get('/get-courses',courseController.getCourses);
 router.get('/get-course/:id',courseController.getCourseById);
 router.delete('/delete-course/:id',auth.authMiddleware,courseController.deleteCourse);
 router.patch('/update-syllabus/:id',auth.authMiddleware, uploadSyllabus.single('syllabus'), courseController.updateSyllabus);
-
+router.put('/update-modules/:id',auth.authMiddleware, courseController.addOrReplaceModules);
 
 module.exports = router;

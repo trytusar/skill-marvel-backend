@@ -5,6 +5,7 @@ require('dotenv').config();
 const axios = require('axios');
 const getFullUrl = require('../utils/getFullUrl');
 const {calculateMasterClassPrice} = require('../utils/calculatePrice');
+const MasterClassModules = require('../models/masterClassModulesModel');
 
 module.exports.addMasterClass = async (req, res) => {
     try {
@@ -64,9 +65,9 @@ module.exports.getMasterClasses = async (req, res) => {
       .populate("instructor", "fullName"); // if you want instructor details */
 
       const masterClasses = await MasterClass.find({ isSoftDelete: false })
-  .select("_id category title startDateTime endDateTime aboutMasterClass whatYouWillLearn price discount discountAmount finalPrice isFree image")
-  //.select('-__v -isSoftDelete -createdAt -updatedAt')
-  .populate("instructor", "fullName -_id");
+            .select("_id category title startDateTime endDateTime aboutMasterClass whatYouWillLearn price discount discountAmount finalPrice isFree image topics syllabus")
+            //.select('-__v -isSoftDelete -createdAt -updatedAt')
+            .populate("instructor", "fullName -_id");
 
     /*  // Flatten instructor → instructorName
         const formatted = masterClasses.map(mc => ({
@@ -78,15 +79,28 @@ module.exports.getMasterClasses = async (req, res) => {
         formatted.forEach(mc => delete mc.instructor);
     */
 
-        const masterClassesWithPrice = masterClasses.map(masterClass => {
+        /*const masterClassesWithPrice = masterClasses.map(masterClass => {
             const priceInfo = calculateMasterClassPrice(masterClass, 0);
             return {
               ...masterClass.toObject(),
               priceInfo
             };
-          });
+          });*/
 
-    res.status(200).json({ masterClasses: masterClassesWithPrice });
+          const masterClassesWithModules = await Promise.all(
+            masterClasses.map(async masterClass => {
+                const priceInfo = calculateMasterClassPrice(masterClass, 0);
+                masterClass.set('priceInfo', priceInfo, { strict: false });
+        
+                // Fetch modules for this course
+                const masterClasseModules = await MasterClassModules.findOne({ masterClassId: masterClass._id }).select('-__v -masterClassId');
+                masterClass.set('modules', masterClasseModules ? masterClasseModules.modules : [], { strict: false });
+        
+                return masterClass;
+            })
+        );
+
+    res.status(200).json({ masterClasses: masterClassesWithModules });
 
     } catch (err) {
         console.log(err);
@@ -108,6 +122,10 @@ module.exports.getMasterClassById = async (req, res) => {
         const masterClassObj = masterClass.toObject();
         // Add priceInfo to object
         masterClassObj.priceInfo = priceInfo;
+        const masterClasseModules = await MasterClassModules.findOne({ masterClassId: masterClass._id }).select('-__v -masterClassId');
+        //masterClass.set('modules', masterClasseModules ? masterClasseModules.modules : [], { strict: false });
+        masterClassObj.modules = masterClasseModules ? masterClasseModules.modules : [];
+
 
         res.status(200).json({ masterClass: masterClassObj });
     } catch (err) {
@@ -220,3 +238,77 @@ exports.purchaseMasterClass = async (req, res) => {
         res.status(500).json({ message: 'Failed to initiate masterclass purchase' });
     }
 };
+
+module.exports.updateSyllabus = async (req, res) => {
+    try{
+        const masterClass = await MasterClass.findById(req.params.id);
+        if (!masterClass) {
+            return res.status(404).json({ error: 'Masterclass not found' });
+        }
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'You are not authorized to delete this course' });
+        }
+        
+        const updateFields = {};
+    
+        /*if (req.body.topics) {
+            updateFields.topics = req.body.topics;
+        }*/
+    
+        if(req.file){
+            updateFields.syllabus = getFullUrl.getMasterClassSyllabusUrl(req);
+        }         
+         
+        if (Object.keys(updateFields).length === 0) {
+            return res.status(404).json({ error: 'No valid fields to update' });
+        }
+    
+        const updatedMasterClass = await MasterClass.findByIdAndUpdate(
+        req.params.id,
+        { $set: updateFields },
+        { new: true }
+        );
+
+        res.status(200).json({ message: 'Masterclass Syllabus updated successfully' });
+  
+    }
+    catch(err){
+        console.log(err);
+        res.status(500).json({ error: 'Failed to update Master class syllabus' });
+    }
+  }
+  
+module.exports.addOrReplaceModules = async (req, res) => {
+    try {
+        const masterClassId = req.params.id;
+        const { modules } = req.body;
+
+        console.log(req.body);
+
+        if (!masterClassId || !modules || !Array.isArray(modules)) {
+            return res.status(400).json({ message: 'masterClassId and modules array are required' });
+        }
+        const masterClass = await MasterClass.findById(masterClassId);
+        if (!masterClass) {
+            return res.status(404).json({ error: 'Master Class not found' });
+        }        
+
+        // Find existing MasterClassModules for the masterClass
+        let masterClassModules = await MasterClassModules.findOne({ masterClassId });
+
+        if (!masterClassModules) {
+            // Create new if not exists
+            masterClassModules = new MasterClassModules({ masterClassId, modules });
+        } else {
+            // Replace all modules
+            masterClassModules.modules = modules;
+        }
+
+        await masterClassModules.save();
+
+        res.status(200).json({ message: 'Modules added/replaced successfully', data: masterClassModules });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error', error: error.message });
+    }
+}; 

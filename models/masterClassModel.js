@@ -72,6 +72,15 @@ const masterClassSchema = new mongoose.Schema({
   isFree: {
     type: Boolean,
     default: false
+  },
+  topics: {
+      type: [String],
+      default: [],
+      required: false
+  },
+  syllabus: {
+      type: String,   // Store PDF file path or URL
+      required: false 
   }
 }, { timestamps: true });
 

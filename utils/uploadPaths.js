@@ -9,4 +9,6 @@ module.exports = {
   BANNER_IMAGE: `${UPLOAD_BASE_URL}/banner`,
   COURSE_SYLLABUS_PATH: `${UPLOAD_BASE_URL}/course-syllabus`,
   MASTERCLASS_SYLLABUS_PATH: `${UPLOAD_BASE_URL}/masterclass-syllabus`,
+  BLOG_IMAGE_PATH: `${UPLOAD_BASE_URL}/blog`,
+  BLOG_INLINE_IMAGE_PATH: `${UPLOAD_BASE_URL}/blog-inline-images`
 };

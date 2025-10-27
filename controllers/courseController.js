@@ -9,6 +9,7 @@ const axios = require('axios');
 const getFullUrl = require('../utils/getFullUrl');
 const generateStudentId = require('../utils/generateStudentId');
 const {calculateCoursePrice} = require('../utils/calculatePrice');
+const CourseModules = require('../models/courseModulesModel');
 
 const razorpayInstance = new Razorpay({
     key_id: process.env.RAZORPAY_KEY,
@@ -75,22 +76,27 @@ module.exports.getCourses = async (req, res) => {
         const courses = await Course.find({ isSoftDelete: false })
         .select('-__v -isSoftDelete -createdAt -updatedAt').populate('instructor', "fullName -_id");
 
-        /*const coursesWithPrice = courses.map(course => {
-            const priceInfo = calculateCoursePrice(course);
-            console.log('priceInfo', priceInfo);
-            return {
-              ...course.toObject(),
-              priceInfo
-            };
-          });*/
 
-          courses.forEach(course => {
+          /*courses.forEach(course => {
             const priceInfo = calculateCoursePrice(course, 0);
             console.log('priceInfo:', priceInfo);
             course.set('priceInfo', priceInfo, { strict: false }); // 👈 allows adding virtual fields
-          });
+          });*/
 
-        res.status(200).json({ courses: courses });
+        const coursesWithModules = await Promise.all(
+            courses.map(async course => {
+                const priceInfo = calculateCoursePrice(course, 0);
+                course.set('priceInfo', priceInfo, { strict: false });
+        
+                // Fetch modules for this course
+                const courseModules = await CourseModules.findOne({ courseId: course._id }).select('-__v -courseId');
+                course.set('modules', courseModules ? courseModules.modules : [], { strict: false });
+        
+                return course;
+            })
+        );
+
+        res.status(200).json({ courses: coursesWithModules });
     }
     catch(err){
         console.log(err);
@@ -110,6 +116,9 @@ module.exports.getCourseById = async (req, res) => {
         // Add priceInfo to object
         courseObj.priceInfo = priceInfo;
           
+        const courseModules = await CourseModules.findOne({ courseId: course._id }).select('-__v -courseId');
+        //course.set('modules', courseModules ? courseModules.modules : [], { strict: false });
+        courseObj.modules = courseModules ? courseModules.modules : [];
 
         res.status(200).json({ course: courseObj });
     }
@@ -148,9 +157,9 @@ module.exports.updateSyllabus = async (req, res) => {
         
         const updateFields = {};
     
-        if (req.body.topics) {
+        /*if (req.body.topics) {
             updateFields.topics = req.body.topics;
-        }
+        }*/
     
         if(req.file){
             updateFields.syllabus = getFullUrl.getCourseSyllabusUrl(req);
@@ -174,3 +183,39 @@ module.exports.updateSyllabus = async (req, res) => {
         res.status(500).json({ error: 'Failed to update syllabus' });
     }
   }
+
+module.exports.addOrReplaceModules = async (req, res) => {
+    try {
+        const courseId = req.params.id;
+        const { modules } = req.body;
+
+        console.log(req.body);
+
+        if (!courseId || !modules || !Array.isArray(modules)) {
+            return res.status(400).json({ message: 'courseId and modules array are required' });
+        }
+        const course = await Course.findById(req.params.id);
+        if (!course) {
+            return res.status(404).json({ error: 'Course not found' });
+        }
+        
+
+        // Find existing CourseModules for the course
+        let courseModules = await CourseModules.findOne({ courseId });
+
+        if (!courseModules) {
+            // Create new if not exists
+            courseModules = new CourseModules({ courseId, modules });
+        } else {
+            // Replace all modules
+            courseModules.modules = modules;
+        }
+
+        await courseModules.save();
+
+        res.status(200).json({ message: 'Modules added/replaced successfully', data: courseModules });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Internal server error', error: error.message });
+    }
+}; 

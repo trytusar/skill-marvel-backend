@@ -16,7 +16,17 @@ const storage = multer.diskStorage({
     }
 });
 
+const syllabusStorage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, `.${uploadPaths.MASTERCLASS_SYLLABUS_PATH}/`);
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + '-' + file.originalname);
+    }
+});
+
 const upload = multer({ storage: storage });
+const uploadSyllabus = multer({ storage: syllabusStorage });
     
 // Add a masterclass (admin only)
 router.post('/save-master-class', auth.authMiddleware, upload.single('image'), masterClassController.addMasterClass);
@@ -38,5 +48,8 @@ router.get('/get-master-class/:masterClassId/checkout', auth.authMiddleware, mas
 
 // Purchase a masterclass
 router.post('/get-master-class/:masterClassId/purchase', auth.authMiddleware, masterClassController.purchaseMasterClass);
+
+router.patch('/update-syllabus/:id',auth.authMiddleware, uploadSyllabus.single('syllabus'), masterClassController.updateSyllabus);
+router.put('/update-modules/:id',auth.authMiddleware, masterClassController.addOrReplaceModules);
 
 module.exports = router;

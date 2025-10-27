@@ -33,6 +33,13 @@ function getMasterClassSyllabusUrl(req) {
   return `${req.protocol}://${req.get('host')}${uploadPaths.MASTERCLASS_SYLLABUS_PATH}/${req.file.filename}`;
 }
 
+function getBlogImageUrl(req) {
+  return `${req.protocol}://${req.get('host')}${uploadPaths.BLOG_IMAGE_PATH}/${req.file.filename}`;
+}
+
+function getBlogInlineImageUrl(req, filename) {
+  return `${req.protocol}://${req.get('host')}${uploadPaths.BLOG_INLINE_IMAGE_PATH}/${filename}`;
+}
  
 module.exports = {
   getMasterClassImageUrl,
@@ -42,7 +49,9 @@ module.exports = {
   getFullUrl,
   getBannerImageUrl,
   getCourseSyllabusUrl,
-  getMasterClassSyllabusUrl
+  getMasterClassSyllabusUrl,
+  getBlogImageUrl,
+  getBlogInlineImageUrl
 };
 
 /*
